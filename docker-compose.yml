@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:6.0
+    container_name: mongodb-container
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: projetclient
+      MONGO_INITDB_ROOT_PASSWORD: clientmongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  web:
+    build: .
+    container_name: django-container
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongodb
+    environment:
+      DJANGO_SETTINGS_MODULE: "CortexLab.settings"  # Variable d'environnement pour Django
+    command: >
+      sh -c "sleep 10 && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+
+volumes:
+  mongo_data:
