@@ -1,0 +1,29 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Tableau de Bord</title>
+    <link rel="stylesheet" href="{% static 'main/css/style.css' %}">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="navbar-left">
+            <h2><a href="{% url 'main:dashboard_home' %}">Tableau de Bord</a></h2>
+        </div>
+        <div class="navbar-right">
+            <ul>
+                <li><a href="{% url 'dashboard:projets' %}">Mes Projets</a></li>
+                <li><a href="{% url 'accounts:deconnexion' %}">Déconnexion</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main>
+        {% block content %}
+        <!-- Le contenu spécifique aux projets sera inséré ici -->
+        {% endblock %}
+    </main>
+</body>
+</html>

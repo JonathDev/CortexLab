@@ -1,0 +1,25 @@
+{% extends 'main/dashboard_home.html' %}
+
+{% block content %}
+  <h2>Vos Projets</h2>
+
+  <p>
+    <a href="{% url 'dashboard:create_project' %}" class="btn btn-success">Créer un nouveau projet</a>
+  </p>
+
+  <!-- Affichage de débogage -->
+  <!--<p>Debug - Nombre de projets : {{ projects|length }}</p>-->
+
+  {% if projects %}
+    <ul>
+      {% for project in projects %}
+        <li>
+          <a href="{% url 'dashboard:view_project' project.id %}">{{ project.name }}</a>
+          - {{ project.get_model_type_display }}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>Aucun projet enregistré pour le moment.</p>
+  {% endif %}
+{% endblock %}

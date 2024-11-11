@@ -1,0 +1,19 @@
+{% extends 'main/dashboard_home.html' %}
+
+{% block content %}
+  <h2>Créer un nouveau projet</h2>
+  <form method="post">
+    {% csrf_token %}
+    <div class="form-group">
+      {{ form.name.label_tag }}
+      {{ form.name }}
+      {{ form.name.errors }}
+    </div>
+    <div class="form-group">
+      {{ form.model_type.label_tag }}
+      {{ form.model_type }}
+      {{ form.model_type.errors }}
+    </div>
+    <button type="submit" class="btn btn-primary">Créer le projet</button>
+  </form>
+{% endblock %}

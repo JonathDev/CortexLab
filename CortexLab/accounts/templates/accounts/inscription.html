@@ -1,0 +1,13 @@
+<!-- templates/accounts/inscription.html -->
+
+{% extends 'main/base.html' %}
+
+{% block content %}
+<h2>Inscription</h2>
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit">S'inscrire</button>
+</form>
+<p>Vous avez déjà un compte ? <a href="{% url 'accounts:connexion' %}">Connectez-vous ici</a>.</p>
+{% endblock %}

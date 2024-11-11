@@ -1,0 +1,96 @@
+{% extends 'main/dashboard_home.html' %}
+
+{% block content %}
+  <h2>Détails du Projet</h2>
+  <p>Nom du projet : {{ project.name }}</p>
+  <p>Type de modèle : {{ project.get_model_type_display }}</p>
+
+  <!-- Formulaire pour téléverser des données -->
+  <form id="uploadForm" method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="file">Télécharger vos données (CSV ou Excel) :</label>
+    <input type="file" id="file" name="file" accept=".csv, .xls, .xlsx" required>
+    <button type="submit">Télécharger et Analyser</button>
+  </form>
+
+  <div id="columnsSection" {% if not columns %}style="display: none;"{% endif %}>
+    <h3>Colonnes détectées :</h3>
+    <ul id="columnsList">
+      {% for column in columns %}
+        <li>{{ column }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <form id="targetForm" method="post">
+    {% csrf_token %}
+    <label for="target">Sélectionnez la colonne cible (target) :</label>
+    <select name="target" id="target" required>
+      {% for column in columns %}
+        <option value="{{ column }}" {% if project.target.name == column %}selected{% endif %}>{{ column }}</option>
+      {% endfor %}
+    </select>
+    <button type="submit">Définir la Target</button>
+  </form>
+
+  <form id="featuresForm" method="post">
+    {% csrf_token %}
+    <h3>Sélectionnez les colonnes de caractéristiques (features) :</h3>
+    {% for column in columns %}
+      <input type="checkbox" name="features" value="{{ column }}" {% if column in project.features %}checked{% endif %}>
+      {{ column }}<br>
+    {% endfor %}
+    <button type="submit">Définir les Features</button>
+  </form>
+
+  <script>
+    document.getElementById("uploadForm").onsubmit = async function(event) {
+      event.preventDefault();
+      let formData = new FormData(this);
+      const response = await fetch("{% url 'dashboard:analyze_data' project.id %}", {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const columnsList = document.getElementById("columnsList");
+        columnsList.innerHTML = "";
+        data.columns.forEach(column => {
+          const li = document.createElement("li");
+          li.textContent = column;
+          columnsList.appendChild(li);
+        });
+        document.getElementById("columnsSection").style.display = "block";
+      }
+    };
+
+    document.getElementById("targetForm").onsubmit = async function(event) {
+      event.preventDefault();
+      let formData = new FormData(this);
+      const response = await fetch("{% url 'dashboard:set_target' project.id %}", {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        alert(data.message);
+      }
+    };
+
+    document.getElementById("featuresForm").onsubmit = async function(event) {
+      event.preventDefault();
+      let formData = new FormData(this);
+      const response = await fetch("{% url 'dashboard:set_features' project.id %}", {
+        method: "POST",
+        body: formData,
+        headers: { "X-CSRFToken": "{{ csrf_token }}" },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        alert(data.message);
+      }
+    };
+  </script>
+{% endblock %}

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Mon Application{% endblock %}</title>
+    <!-- Inclure vos fichiers CSS ici -->
+</head>
+<body>
+    <header>
+        <!-- En-tête de votre site avec connexion et inscription -->
+        <p><a href="{% url 'accounts:connexion' %}">Connexion</a> | <a href="{% url 'accounts:inscription' %}">Inscription</a></p>
+    </header>
+    <main>
+        {% block content %}
+        <!-- Le contenu spécifique à chaque page sera inséré ici -->
+        {% endblock %}
+    </main>
+    <footer>
+        <!-- Pied de page -->
+    </footer>
+    <!-- Inclure vos fichiers JavaScript ici -->
+</body>
+</html>
