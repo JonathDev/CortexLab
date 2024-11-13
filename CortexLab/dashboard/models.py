@@ -14,8 +14,8 @@ class Project(Document):
     target = DictField(default=dict, blank=True, null=True)
     trained_model = BinaryField(default=b'', blank=True, null=True)
     created_at = DateTimeField()
-    
-    meta = {
+    description = StringField(max_length=255, required=False)
+    meta = { 
         'collection': 'project',
         'db_alias': 'default',  # Assurez-vous que c'est l'alias correct
     }

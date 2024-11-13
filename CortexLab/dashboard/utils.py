@@ -17,10 +17,10 @@ def load_data(file):
 def get_columns(df):
     return df.columns.tolist()
 
-def set_target(project, target_name):
+def save_target(project, target_name):
     project.target = {'name': target_name}
     project.save()
 
-def set_features(project, features_list):
+def save_features(project, features_list):
     project.features = {feature: None for feature in features_list}
     project.save()

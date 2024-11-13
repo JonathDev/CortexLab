@@ -13,33 +13,22 @@
     <button type="submit">Télécharger et Analyser</button>
   </form>
 
-  <div id="columnsSection" {% if not columns %}style="display: none;"{% endif %}>
+  <div id="columnsSection" style="display: none;">
     <h3>Colonnes détectées :</h3>
-    <ul id="columnsList">
-      {% for column in columns %}
-        <li>{{ column }}</li>
-      {% endfor %}
-    </ul>
+    <ul id="columnsList"></ul>
   </div>
 
-  <form id="targetForm" method="post">
+  <form id="targetForm" method="post" style="display: none;">
     {% csrf_token %}
     <label for="target">Sélectionnez la colonne cible (target) :</label>
-    <select name="target" id="target" required>
-      {% for column in columns %}
-        <option value="{{ column }}" {% if project.target.name == column %}selected{% endif %}>{{ column }}</option>
-      {% endfor %}
-    </select>
+    <select name="target" id="target" required></select>
     <button type="submit">Définir la Target</button>
   </form>
 
-  <form id="featuresForm" method="post">
+  <form id="featuresForm" method="post" style="display: none;">
     {% csrf_token %}
     <h3>Sélectionnez les colonnes de caractéristiques (features) :</h3>
-    {% for column in columns %}
-      <input type="checkbox" name="features" value="{{ column }}" {% if column in project.features %}checked{% endif %}>
-      {{ column }}<br>
-    {% endfor %}
+    <div id="featuresList"></div>
     <button type="submit">Définir les Features</button>
   </form>
 
@@ -56,12 +45,36 @@
         const data = await response.json();
         const columnsList = document.getElementById("columnsList");
         columnsList.innerHTML = "";
+        const targetSelect = document.getElementById("target");
+        const featuresList = document.getElementById("featuresList");
+
+        targetSelect.innerHTML = "";
+        featuresList.innerHTML = "";
+
         data.columns.forEach(column => {
           const li = document.createElement("li");
           li.textContent = column;
           columnsList.appendChild(li);
+
+          const option = document.createElement("option");
+          option.value = column;
+          option.textContent = column;
+          targetSelect.appendChild(option);
+
+          const checkbox = document.createElement("input");
+          checkbox.type = "checkbox";
+          checkbox.name = "features";
+          checkbox.value = column;
+          const label = document.createElement("label");
+          label.textContent = column;
+          featuresList.appendChild(checkbox);
+          featuresList.appendChild(label);
+          featuresList.appendChild(document.createElement("br"));
         });
+
         document.getElementById("columnsSection").style.display = "block";
+        document.getElementById("targetForm").style.display = "block";
+        document.getElementById("featuresForm").style.display = "block";
       }
     };
 
