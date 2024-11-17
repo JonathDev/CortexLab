@@ -1,109 +1,57 @@
 {% extends 'main/dashboard_home.html' %}
+{% load static %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'dashboard/css/dashboard.css' %}">
+{% endblock %}
 
 {% block content %}
-  <h2>Détails du Projet</h2>
-  <p>Nom du projet : {{ project.name }}</p>
-  <p>Type de modèle : {{ project.get_model_type_display }}</p>
+<h2>Détails du Projet</h2>
+<p>Nom du projet : {{ project.name }}</p>
+<p>Type de modèle : {{ project.get_model_type_display }}</p>
 
-  <!-- Formulaire pour téléverser des données -->
-  <form id="uploadForm" method="post" enctype="multipart/form-data">
+<!-- Formulaire pour téléverser des données -->
+<form id="uploadForm" method="post" enctype="multipart/form-data" data-url="{% url 'dashboard:analyze_data' project.id %}">
     {% csrf_token %}
     <label for="file">Télécharger vos données (CSV ou Excel) :</label>
     <input type="file" id="file" name="file" accept=".csv, .xls, .xlsx" required>
     <button type="submit">Télécharger et Analyser</button>
-  </form>
+</form>
 
-  <div id="columnsSection" style="display: none;">
+<!-- Sélection du type de modèle -->
+<form id="modelTypeForm" method="post" data-url="{% url 'dashboard:set_model_type' project.id %}">
+    {% csrf_token %}
+    <label for="model_type">Choisissez un type de modèle :</label>
+    <select name="model_type" id="model_type" required>
+        <option value="" disabled {% if not project.model_type %}selected{% endif %}>-- Sélectionnez un type de modèle --</option>
+        <option value="clustering" {% if project.model_type == "clustering" %}selected{% endif %}>Clustering</option>
+        <option value="regression" {% if project.model_type == "regression" %}selected{% endif %}>Régression</option>
+        <option value="classification" {% if project.model_type == "classification" %}selected{% endif %}>Classification</option>
+    </select>
+    <button type="submit">Enregistrer le modèle</button>
+</form>
+
+<!-- Affichage des colonnes détectées -->
+<div id="columnsSection" style="display: none;">
     <h3>Colonnes détectées :</h3>
     <ul id="columnsList"></ul>
-  </div>
+</div>
 
-  <form id="targetForm" method="post" style="display: none;">
+<!-- Formulaire pour sélectionner la target -->
+<form id="targetForm" method="post" data-url="{% url 'dashboard:set_target' project.id %}" style="display: none;">
     {% csrf_token %}
     <label for="target">Sélectionnez la colonne cible (target) :</label>
     <select name="target" id="target" required></select>
     <button type="submit">Définir la Target</button>
-  </form>
+</form>
 
-  <form id="featuresForm" method="post" style="display: none;">
+<!-- Formulaire pour sélectionner les features -->
+<form id="featuresForm" method="post" data-url="{% url 'dashboard:set_features' project.id %}" style="display: none;">
     {% csrf_token %}
     <h3>Sélectionnez les colonnes de caractéristiques (features) :</h3>
     <div id="featuresList"></div>
     <button type="submit">Définir les Features</button>
-  </form>
+</form>
 
-  <script>
-    document.getElementById("uploadForm").onsubmit = async function(event) {
-      event.preventDefault();
-      let formData = new FormData(this);
-      const response = await fetch("{% url 'dashboard:analyze_data' project.id %}", {
-        method: "POST",
-        body: formData,
-        headers: { "X-CSRFToken": "{{ csrf_token }}" },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const columnsList = document.getElementById("columnsList");
-        columnsList.innerHTML = "";
-        const targetSelect = document.getElementById("target");
-        const featuresList = document.getElementById("featuresList");
-
-        targetSelect.innerHTML = "";
-        featuresList.innerHTML = "";
-
-        data.columns.forEach(column => {
-          const li = document.createElement("li");
-          li.textContent = column;
-          columnsList.appendChild(li);
-
-          const option = document.createElement("option");
-          option.value = column;
-          option.textContent = column;
-          targetSelect.appendChild(option);
-
-          const checkbox = document.createElement("input");
-          checkbox.type = "checkbox";
-          checkbox.name = "features";
-          checkbox.value = column;
-          const label = document.createElement("label");
-          label.textContent = column;
-          featuresList.appendChild(checkbox);
-          featuresList.appendChild(label);
-          featuresList.appendChild(document.createElement("br"));
-        });
-
-        document.getElementById("columnsSection").style.display = "block";
-        document.getElementById("targetForm").style.display = "block";
-        document.getElementById("featuresForm").style.display = "block";
-      }
-    };
-
-    document.getElementById("targetForm").onsubmit = async function(event) {
-      event.preventDefault();
-      let formData = new FormData(this);
-      const response = await fetch("{% url 'dashboard:set_target' project.id %}", {
-        method: "POST",
-        body: formData,
-        headers: { "X-CSRFToken": "{{ csrf_token }}" },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        alert(data.message);
-      }
-    };
-
-    document.getElementById("featuresForm").onsubmit = async function(event) {
-      event.preventDefault();
-      let formData = new FormData(this);
-      const response = await fetch("{% url 'dashboard:set_features' project.id %}", {
-        method: "POST",
-        body: formData,
-        headers: { "X-CSRFToken": "{{ csrf_token }}" },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        alert(data.message);
-      }
-    };
-  </script>
+<script src="{% static 'dashboard/js/dashboard.js' %}"></script>
 {% endblock %}

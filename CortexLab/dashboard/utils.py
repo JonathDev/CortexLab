@@ -24,3 +24,11 @@ def save_target(project, target_name):
 def save_features(project, features_list):
     project.features = {feature: None for feature in features_list}
     project.save()
+
+
+def save_model_type(project, model_type):
+    """
+    Met à jour le type de modèle pour un projet.
+    """
+    project.model_type = model_type
+    project.save()

@@ -16,11 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from dashboard.mongo_admin import mongo_admin_site
+from dashboard.mongo_admin import test_view
+import logging
+
+logger = logging.getLogger(__name__)
+logger.info("MongoAdminSite chargé avec succès")    
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('mongo-test/', test_view), 
+    path('mongo-admin/', mongo_admin_site.urls),  # Interface MongoDB Admin
+    path('admin/', admin.site.urls),  # Interface admin standard
     path('', include('main.urls', namespace='main')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('dashboard/', include('dashboard.urls', namespace='dashboard')),
-    # Autres inclusions...
 ]

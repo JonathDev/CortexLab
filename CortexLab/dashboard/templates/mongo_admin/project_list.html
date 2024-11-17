@@ -1,0 +1,23 @@
+{% extends "admin/base_site.html" %}
+
+{% block content %}
+<h1>Liste des projets MongoDB</h1>
+<table>
+    <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Type de modèle</th>
+            <th>Date de création</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for project in projects %}
+        <tr>
+            <td>{{ project.name }}</td>
+            <td>{{ project.model_type }}</td>
+            <td>{{ project.created_at }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
