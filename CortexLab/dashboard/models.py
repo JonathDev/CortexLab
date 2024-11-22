@@ -1,7 +1,8 @@
-# dashboard/models.py
+from mongoengine import Document, EmbeddedDocument, StringField, ListField, EmbeddedDocumentField, DateTimeField
 
-from mongoengine import Document, StringField, DictField, DateTimeField, BinaryField,ListField
-
+class ColumnData(EmbeddedDocument):
+    name = StringField(required=True)  # Nom de la colonne
+    values = ListField()               # Liste des valeurs de la colonne
 
 class Project(Document):
     user_id = StringField(required=True)
@@ -10,17 +11,17 @@ class Project(Document):
         ('clustering', 'Clustering'),
         ('regression', 'Régression'),
         ('classification', 'Classification'),
-    ], required=False)  # Peut être défini plus tard
-    features = DictField(default=dict, blank=True, null=True)
-    target = DictField(default=dict, blank=True, null=True)
-    trained_model = BinaryField(default=b'', blank=True, null=True)
+    ], required=False, null=True)
+    columns = ListField(EmbeddedDocumentField(ColumnData), default=list)  # Toutes les colonnes avec leurs valeurs
+    target = StringField(required=False, null=True)  # Nom de la colonne cible
+    features = ListField(StringField(), default=list)  # Liste des noms des colonnes sélectionnées comme features
     created_at = DateTimeField()
     description = StringField(max_length=255, required=False)
-    columns = ListField(StringField(), default=list)  # Ajout des colonnes détectées
     meta = {
         'collection': 'project',
         'db_alias': 'default',
     }
+
 
 """
 class Project(Document):
