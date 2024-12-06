@@ -4,12 +4,13 @@ from django.http import JsonResponse, Http404
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .forms import ProjectForm
-from .models import ColumnData, Project
-from .utils import load_data, get_columns, load_data_from_project, save_features_with_data, save_target, save_features, save_model_type, save_target_with_data
+from .models import ColumnData, Project, Dataset
+from .utils import load_data, get_columns, load_data_from_project, save_features_with_data, save_target, save_features, save_model_type, save_target_with_data, validate_dataset
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
 from django.contrib import messages
+import pandas as pd 
 
 
 @login_required
@@ -51,20 +52,9 @@ def view_project(request, id):
     except Project.DoesNotExist:
         raise Http404("Projet non trouvé")
 
-    # Préparer les données pour les 5 premières lignes
-    dataset_preview = []
-    if project.columns:
-        max_rows = 5
-        for i in range(max_rows):
-            row = [col.values[i] if len(col.values) > i else "-" for col in project.columns]
-            dataset_preview.append(row)
-
     context = {
         'project': project,
-        'target': project.target if project.target else None,
-        'features': project.features if project.features else [],
-        'columns': project.columns,
-        'dataset_preview': dataset_preview,  # Données préparées pour le tableau
+        'datasets': project.datasets  # Inclure les datasets dans le contexte
     }
     return render(request, 'dashboard/view_project.html', context)
 
@@ -109,35 +99,80 @@ def analyze_data(request, id):
 @csrf_exempt
 @login_required
 def analyze_data(request, id):
+    # Ajout des logs pour déboguer
+    print(f"Requête reçue dans analyze_data : {request.method}")
+    print(f"Contenu de FILES : {request.FILES}")
+    print(f"Contenu de POST : {request.POST}")
+
     if request.method == "POST" and 'file' in request.FILES:
         file = request.FILES["file"]
-        df, error = load_data(file)  # Votre fonction pour charger le fichier dans un DataFrame
+        print(f"Fichier reçu : {file.name}")  # Log du fichier reçu
+        
+        # Charger les données depuis le fichier
+        df_new, error = load_data(file)
         if error:
-            print(f"Erreur lors du chargement des données : {error}")
+            print(f"Erreur de chargement du fichier : {error}")
             return JsonResponse({"error": error}, status=400)
 
         try:
             project = Project.objects.get(id=ObjectId(id))
+            print(f"Projet trouvé : {project.name}")  # Log du projet trouvé
         except Project.DoesNotExist:
-            print("Projet non trouvé.")
+            print("Erreur : Projet non trouvé")
             return JsonResponse({"error": "Projet non trouvé."}, status=404)
 
-        # Convertir les colonnes en ColumnData
-        column_data = []
-        for col in df.columns:
-            column_data.append(ColumnData(name=col, values=df[col].tolist()))
-        print(f"Colonnes détectées : {[col.name for col in column_data]}")
+        # Récupérer le nom du dataset depuis le formulaire ou utiliser le nom du fichier
+        dataset_name = request.POST.get('dataset_name', file.name)
+        print(f"Nom du dataset : {dataset_name}")  # Log du nom du dataset
+        
+        # Préparer les colonnes pour le dataset
+        column_data = [
+            ColumnData(name=col, values=df_new[col].tolist()) for col in df_new.columns
+        ]
+        print(f"Colonnes du dataset : {column_data}")  # Log des colonnes
 
-        # Enregistrer les colonnes dans le projet
-        project.columns = column_data
-        project.save()
+        new_dataset = Dataset(
+            name=dataset_name,
+            columns=column_data,
+            uploaded_at=timezone.now()
+        )
 
-        # Retourner une réponse JSON avec les colonnes
+        # Ajouter la validation ici
+        try:
+            validate_dataset(new_dataset)  # Validation du dataset
+            print("Validation réussie")  # Log si validation réussie
+            project.datasets.append(new_dataset)  # Ajouter au projet si validé
+        except ValueError as e:
+            print(f"Erreur de validation : {str(e)}")  # Log de l'erreur de validation
+            return JsonResponse({"error": str(e)}, status=400)
+
+        # Sauvegarder le projet
+        try:
+            project.save()
+            print(f"Projet enregistré dans MongoDB : {project.id}")  # Log de l'enregistrement
+        except Exception as e:
+            print(f"Erreur lors de l'enregistrement : {e}")  # Log de l'erreur d'enregistrement
+            return JsonResponse({"error": "Erreur lors de l'enregistrement."}, status=500)
+
+        # Retourner les données du nouveau dataset
         column_names = [col.name for col in column_data]
-        return JsonResponse({"columns": column_names})
+        return JsonResponse({
+            "dataset": {
+                "name": new_dataset.name,
+                "columns": column_names,
+                "uploaded_at": new_dataset.uploaded_at.strftime("%Y-%m-%d %H:%M:%S"),
+            }
+        })
 
-    print("Aucun fichier fourni.")
-    return JsonResponse({"error": "Aucun fichier fourni."}, status=400)
+    print("Erreur : Aucun fichier fourni ou requête invalide")
+    return JsonResponse({"error": "Aucun fichier fourni ou requête invalide."}, status=400)
+
+
+
+
+
+
+
 
 
 

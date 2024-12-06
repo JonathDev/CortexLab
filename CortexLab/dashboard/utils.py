@@ -70,3 +70,13 @@ def load_data_from_project(project):
         return df, None
     except Exception as e:
         return None, str(e)
+
+
+def validate_dataset(dataset):
+    """
+    Valide que le dataset est correctement structuré.
+    """
+    if not dataset.name:
+        raise ValueError("Le dataset doit avoir un nom.")
+    if not dataset.columns or len(dataset.columns) == 0:
+        raise ValueError("Le dataset doit contenir au moins une colonne.")

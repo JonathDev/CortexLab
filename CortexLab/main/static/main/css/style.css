@@ -1,46 +1,30 @@
-body {
-    font-family: Arial, sans-serif;
+/* Assurer que la page occupe toute la hauteur */
+html, body {
+    height: 100%;
+    margin: 0;
+    padding: 0;
 }
 
+/* Conteneur principal */
+.main-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Navbar */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 1rem;
+    padding: 0.8rem 2rem;
     background-color: #333;
     color: #fff;
+    height: 60px; /* Hauteur fixe pour aligner avec la sidebar */
+    box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.1); /* Ombre optionnelle */
+    z-index: 1100; /* Assurer que la navbar reste au-dessus */
+    position: fixed;
+    top: 0;
+    width: 100%;
 }
 
-.logo {
-    height: 40px;
-}
-
-.create-project {
-    color: #fff;
-    font-size: 1.2rem;
-    text-decoration: none;
-}
-
-.create-project:hover {
-    color: #ddd;
-}
-
-.navbar-right p {
-    margin: 0;
-}
-
-
-/* Style pour le bouton de déconnexion */
-.logout-button {
-    margin-left: 15px;
-    padding: 5px 10px;
-    background-color: #f44336;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 4px;
-    font-size: 0.9rem;
-}
-
-.logout-button:hover {
-    background-color: #d32f2f;
-}

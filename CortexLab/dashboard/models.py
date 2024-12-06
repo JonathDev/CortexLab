@@ -4,6 +4,11 @@ class ColumnData(EmbeddedDocument):
     name = StringField(required=True)  # Nom de la colonne
     values = ListField()               # Liste des valeurs de la colonne
 
+class Dataset(EmbeddedDocument):
+    name = StringField(required=True)  # Nom du dataset (e.g., nom du fichier)
+    columns = ListField(EmbeddedDocumentField(ColumnData), default=list)
+    uploaded_at = DateTimeField(required=True)
+
 class Project(Document):
     user_id = StringField(required=True)
     name = StringField(max_length=255, required=True)
@@ -12,15 +17,16 @@ class Project(Document):
         ('regression', 'Régression'),
         ('classification', 'Classification'),
     ], required=False, null=True)
-    columns = ListField(EmbeddedDocumentField(ColumnData), default=list)  # Toutes les colonnes avec leurs valeurs
-    target = StringField(required=False, null=True)  # Nom de la colonne cible
-    features = ListField(StringField(), default=list)  # Liste des noms des colonnes sélectionnées comme features
+    datasets = ListField(EmbeddedDocumentField(Dataset), default=list)  # Liste des datasets
+    target = StringField(required=False, null=True)
+    features = ListField(StringField(), default=list)
     created_at = DateTimeField()
     description = StringField(max_length=255, required=False)
     meta = {
         'collection': 'project',
         'db_alias': 'default',
     }
+
 
 
 """
