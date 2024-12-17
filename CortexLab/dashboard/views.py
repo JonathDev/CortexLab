@@ -5,7 +5,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from .forms import ProjectForm
 from .models import ColumnData, Project, Dataset
-from .utils import load_data, get_columns, load_data_from_project, save_features_with_data, save_target, save_features, save_model_type, save_target_with_data, validate_dataset
+from .utils import load_data, get_columns, load_data_from_project, save_features_with_data, save_target, save_features, save_model_type, save_target_with_data, validate_dataset,delete_dataset_from_project 
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
@@ -287,3 +287,41 @@ def set_model_type(request, id):
         project.save()
 
         return JsonResponse({"message": "Type de modèle enregistré avec succès"})
+
+@csrf_exempt
+@login_required
+def delete_dataset(request, id):
+    print("Requête reçue pour supprimer un dataset")
+
+    if request.method == "POST":
+        try:
+            dataset_id = request.POST.get("dataset_id")  # Récupérer l'ID du dataset
+            print(f"ID du dataset reçu : {dataset_id}")
+
+            if not dataset_id:
+                return JsonResponse({"error": "ID du dataset manquant"}, status=400)
+
+            # Récupérer le projet
+            project = Project.objects.get(id=ObjectId(id))
+            print(f"Projet trouvé : {project.name}")
+
+            # Filtrer et supprimer le dataset
+            initial_length = len(project.datasets)
+            project.datasets = [ds for ds in project.datasets if ds.id != dataset_id]
+
+            if len(project.datasets) == initial_length:
+                print("Dataset introuvable.")
+                return JsonResponse({"error": "Dataset introuvable"}, status=404)
+
+            # Sauvegarder le projet après suppression
+            project.save()
+            print(f"Dataset {dataset_id} supprimé avec succès.")
+            return JsonResponse({"message": "Dataset supprimé avec succès"})
+
+        except Project.DoesNotExist:
+            return JsonResponse({"error": "Projet non trouvé"}, status=404)
+        except Exception as e:
+            print(f"Erreur inattendue : {e}")
+            return JsonResponse({"error": "Erreur interne"}, status=500)
+
+    return JsonResponse({"error": "Méthode non autorisée"}, status=405)

@@ -1,11 +1,14 @@
 from mongoengine import Document, EmbeddedDocument, StringField, ListField, EmbeddedDocumentField, DateTimeField
+import uuid
+
 
 class ColumnData(EmbeddedDocument):
     name = StringField(required=True)  # Nom de la colonne
     values = ListField()               # Liste des valeurs de la colonne
 
 class Dataset(EmbeddedDocument):
-    name = StringField(required=True)  # Nom du dataset (e.g., nom du fichier)
+    id = StringField(default=lambda: str(uuid.uuid4()), unique=True)  # ID unique
+    name = StringField(required=True)
     columns = ListField(EmbeddedDocumentField(ColumnData), default=list)
     uploaded_at = DateTimeField(required=True)
 

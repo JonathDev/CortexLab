@@ -3,6 +3,7 @@ from .models import Project
 from django.http import JsonResponse
 from .models import ColumnData
 import os 
+from bson import ObjectId
 
 
 def load_data(file):
@@ -80,3 +81,28 @@ def validate_dataset(dataset):
         raise ValueError("Le dataset doit avoir un nom.")
     if not dataset.columns or len(dataset.columns) == 0:
         raise ValueError("Le dataset doit contenir au moins une colonne.")
+    
+    from .models import Project
+from bson import ObjectId
+
+
+def delete_dataset_from_project(project_id, dataset_name):
+    from bson import ObjectId
+
+    print(f"Suppression du dataset : {dataset_name} dans le projet : {project_id}")
+    try:
+        project = Project.objects.get(id=ObjectId(project_id))
+        print(f"Projet trouvé : {project.name}")
+    except Project.DoesNotExist:
+        raise ValueError("Projet non trouvé.")
+
+    # Filtrer les datasets
+    datasets = [ds for ds in project.datasets if ds.name != dataset_name]
+    if len(datasets) == len(project.datasets):  # Aucun changement
+        raise ValueError("Dataset introuvable.")
+
+    # Sauvegarder les changements
+    project.datasets = datasets
+    project.save()
+    print(f"Dataset '{dataset_name}' supprimé avec succès")
+

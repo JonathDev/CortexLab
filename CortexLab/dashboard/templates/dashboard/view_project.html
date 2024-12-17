@@ -73,7 +73,7 @@
 <div class="row g-3">
     {% if project.datasets %}
         {% for dataset in project.datasets %}
-        <div class="col-md-4"> <!-- 3 cartes par ligne -->
+        <div class="col-md-4">
             <div class="card dataset-card shadow-sm">
                 <div class="row g-0 align-items-center">
                     <div class="col-3 text-center">
@@ -84,17 +84,25 @@
                             <h6 class="card-title">{{ dataset.name }}</h6>
                             <p class="card-text"><small>Date : {{ dataset.uploaded_at }}</small></p>
                             <p class="card-text"><small>Colonnes : {{ dataset.columns|length }}</small></p>
-                            <button class="btn btn-primary btn-sm">Nettoyer</button>
+                            <form class="delete-dataset-form" method="POST" action="{% url 'dashboard:delete_dataset' project.id %}">
+                                {% csrf_token %}
+                                <input type="hidden" name="dataset_id" value="{{ dataset.id }}">
+                                <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                            </form>
+                                                                                 
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+        
         {% endfor %}
     {% else %}
         <p class="text-muted">Aucun dataset disponible.</p>
     {% endif %}
 </div>
+
+
 
 
         <!-- Résumé des actions -->
