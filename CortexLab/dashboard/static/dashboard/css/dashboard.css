@@ -57,26 +57,64 @@
 
 /* Ajuster la largeur des cartes */
 /* Ajuster la largeur des cartes */
-.dataset-card {
+/*.dataset-card {
     display: flex;
     flex-direction: row;
     align-items: center;
     padding: 15px;
     border-radius: 8px;
-    width: 100%; /* Utiliser toute la largeur de la colonne */
+    width: 100%; 
     transition: transform 0.3s ease, box-shadow 0.3s ease;
+}*/
+/* Utiliser toute la largeur de la colonne */
+
+.dataset-card {
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    transition: box-shadow 0.3s ease;
+    width: 70%; 
 }
+
+
 
 .dataset-card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 /* Réduire l'image et aligner le texte */
-.dataset-icon {
+/*.dataset-icon {
     width: 80px;
     height: 80px;
     margin-right: 15px;
+}*/
+
+
+.info img {
+    width: 50px;
+    height: auto;
+}
+
+.card-footer {
+    background-color: #afb0b1 !important ;
+    border-top: 1px solid #ddd;
+}
+
+
+.card-header {
+    background-color: #afb0b1; /* Gris clair pour le titre */
+    border-bottom: 1px solid #ddd;
+}
+
+
+.actions .form-check-label {
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.actions button i {
+    font-size: 1.2rem;
+    margin-top: 3px;
 }
 
 .card-body {
@@ -108,4 +146,13 @@
 .row.g-3 {
     margin-left: -15px; /* Corrige l'espacement global */
     margin-right: -15px;
+}
+
+
+
+.bi-eye{
+
+    font-size: 1.2rem;
+    color: blue;
+    padding: 3px; 
 }
