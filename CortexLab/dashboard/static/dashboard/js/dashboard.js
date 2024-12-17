@@ -60,29 +60,34 @@ document.addEventListener("DOMContentLoaded", function () {
             console.error("Container des datasets introuvable.");
             return;
         }
+         // Récupérer l'ID du projet depuis le DOM
+        const projectId = document.getElementById("project-container").dataset.projectId;
 
-        const card = `
-            <div class="col-md-4">
-                <div class="card dataset-card shadow-sm">
-                    <div class="row g-0 align-items-center">
-                        <div class="col-3 text-center">
-                            <img src="/static/dashboard/icons/dataset-icon.webp" alt="Dataset Icon" class="img-fluid dataset-icon">
-                        </div>
-                        <div class="col-9">
-                            <div class="card-body">
-                                <h6 class="card-title">${dataset.name}</h6>
-                                <p class="card-text"><small>Date : ${dataset.uploaded_at}</small></p>
-                                <p class="card-text"><small>Colonnes : ${dataset.columns.length}</small></p>
-                                <form class="delete-dataset-form" action="/dashboard/projets/${dataset.project_id}/delete_dataset/" method="POST">
-                                    <input type="hidden" name="dataset_name" value="${dataset.name}">
-                                    <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
-                                </form>
-                            </div>
-                        </div>
+            // Construire la carte avec l'URL d'action correcte
+    const card = `
+    <div class="col-md-4">
+        <div class="card dataset-card shadow-sm">
+            <div class="row g-0 align-items-center">
+                <div class="col-3 text-center">
+                    <img src="/static/dashboard/icons/dataset-icon.webp" alt="Dataset Icon" class="img-fluid dataset-icon">
+                </div>
+                <div class="col-9">
+                    <div class="card-body">
+                        <h6 class="card-title">${dataset.name}</h6>
+                        <p class="card-text"><small>Date : ${dataset.uploaded_at}</small></p>
+                        <p class="card-text"><small>Colonnes : ${dataset.columns.length}</small></p>
+                        <form class="delete-dataset-form" method="POST" action="/dashboard/projets/${projectId}/delete_dataset/">
+                            <input type="hidden" name="dataset_id" value="${dataset.id}">
+                            <button type="submit" class="btn btn-danger btn-sm">Supprimer</button>
+                        </form>
                     </div>
                 </div>
-            </div>`;
-        datasetsContainer.insertAdjacentHTML("beforeend", card);
+            </div>
+        </div>
+    </div>`;
+
+datasetsContainer.insertAdjacentHTML("beforeend", card);
+
     }
 
     // ---- Afficher un message de succès ----

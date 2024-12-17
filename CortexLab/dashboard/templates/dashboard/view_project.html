@@ -61,7 +61,7 @@
     </div>
 
     <!-- Content -->
-    <div class="content flex-grow-1">
+    <div class="content flex-grow-1" id="project-container" data-project-id="{{ project.id }}">
         <h2>Détails du Projet</h2>
         <p><strong>Nom :</strong> {{ project.name }}</p>
         <p><strong>Type de modèle :</strong> {{ project.get_model_type_display|default:"Non défini" }}</p>

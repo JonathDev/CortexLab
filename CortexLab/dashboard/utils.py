@@ -82,8 +82,6 @@ def validate_dataset(dataset):
     if not dataset.columns or len(dataset.columns) == 0:
         raise ValueError("Le dataset doit contenir au moins une colonne.")
     
-    from .models import Project
-from bson import ObjectId
 
 
 def delete_dataset_from_project(project_id, dataset_name):

@@ -158,6 +158,7 @@ def analyze_data(request, id):
         column_names = [col.name for col in column_data]
         return JsonResponse({
             "dataset": {
+                "id": new_dataset.id,
                 "name": new_dataset.name,
                 "columns": column_names,
                 "uploaded_at": new_dataset.uploaded_at.strftime("%Y-%m-%d %H:%M:%S"),
@@ -260,7 +261,14 @@ def set_model_type(request, id):
         save_model_type(project, model_type)
         return JsonResponse({"message": "Type de modèle enregistré avec succès"})
 
-    return JsonResponse({"message": "Requête non autorisée"}, status=405)
+    return JsonResponse({"message": "Requête non autorisée"}, status=405)return JsonResponse({
+    "dataset": {
+        "id": new_dataset.id,  # Retourner l'ID unique
+        "name": new_dataset.name,
+        "columns": column_names,
+        "uploaded_at": new_dataset.uploaded_at.strftime("%Y-%m-%d %H:%M:%S"),
+    }
+})
 """
 
 @login_required

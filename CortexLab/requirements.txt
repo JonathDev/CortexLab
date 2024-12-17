@@ -5,3 +5,4 @@ mongoengine==0.29.1
 pymongo==4.10.1
 pytz==2024.2
 sqlparse==0.2.4
+pandas
