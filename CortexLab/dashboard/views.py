@@ -333,3 +333,13 @@ def delete_dataset(request, id):
             return JsonResponse({"error": "Erreur interne"}, status=500)
 
     return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+
+
+@csrf_exempt
+def save_selected_datasets(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        request.session['selected_datasets'] = data.get('datasets', [])
+        return JsonResponse({'message': 'Datasets enregistrés avec succès'})
+    return JsonResponse({'error': 'Méthode non autorisée'}, status=405)

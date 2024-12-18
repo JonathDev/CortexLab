@@ -40,6 +40,7 @@ INSTALLED_APPS = [
         'main',
     'accounts',
     'dashboard.apps.DashboardConfig',
+    'data_cleaning',
     
 ]
 

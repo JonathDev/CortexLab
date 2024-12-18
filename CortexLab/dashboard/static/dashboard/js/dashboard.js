@@ -166,4 +166,38 @@ datasetsContainer.insertAdjacentHTML("beforeend", card);
         }
         return null;
     }
+
+
+     // ---- Gestion des cases à cocher avec l'icône d'œil ----
+     const selectedDatasets = [];
+     document.querySelectorAll('.dataset-checkbox').forEach((checkbox) => {
+        checkbox.addEventListener('change', () => {
+            const datasetId = checkbox.dataset.id;
+
+            if (checkbox.checked) {
+                if (!selectedDatasets.includes(datasetId)) {
+                    selectedDatasets.push(datasetId);
+                }
+            } else {
+                const index = selectedDatasets.indexOf(datasetId);
+                if (index > -1) selectedDatasets.splice(index, 1);
+            }
+
+            console.log("Datasets sélectionnés :", selectedDatasets);
+        });
+    });
+
+    // ---- Gestion du bouton Analyser ----
+    const analyzeButton = document.getElementById('analyze-btn');
+    analyzeButton.addEventListener('click', () => {
+        if (selectedDatasets.length === 0) {
+            alert("Veuillez sélectionner au moins un dataset pour analyser.");
+            return;
+        }
+
+        // Redirection vers la page d'analyse avec les IDs des datasets
+        const url = `/data_cleaning/?datasets=${selectedDatasets.join(",")}`;
+        console.log("Redirection vers :", url); // Log de débogage
+        window.location.href = url;
+    });
 });
