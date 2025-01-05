@@ -18,12 +18,96 @@
         </ul>
     </div>
 
-    <!-- Contenu Principal -->
-    <div class="flex-grow-1 p-4">
-        <h2 class="text-center">Analyse des Datasets</h2>
-        <div id="dataset-content" class="border p-3 rounded bg-white">
-            <p class="text-muted text-center">Sélectionnez un dataset pour afficher son contenu.</p>
+    <!-- Conteneur Principal -->
+    <div class="flex-grow-1">
+        <div class="card mb-4 w-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Analyse et Nettoyage des Datasets</h5>
+            </div>
+            <div class="card-body d-flex">
+                <!-- Contenu Principal à Gauche -->
+                <div class="flex-grow-1 me-4">
+                    <div class="mb-3">
+                        <label for="dataset-selector" class="form-label">Choisir un Dataset :</label>
+                        <select id="dataset-selector" class="form-select">
+                            <option value="" disabled selected>-- Sélectionnez un Dataset --</option>
+                            {% for dataset in datasets %}
+                            <option value="{{ dataset.id }}">{{ dataset.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+        
+                    <!-- Section de Visualisation -->
+                    <div id="dataset-visualization" class="border p-3 rounded bg-light">
+                        <h6>Visualisation des Données</h6>
+                        <p class="text-muted">Sélectionnez un dataset pour afficher les données ici.</p>
+                    </div>                                     
+        
+                    <!-- Section Actions Entreprises -->
+                    <div id="action-log" class="border mt-3 p-3 rounded bg-light">
+                        <h6>Actions Entreprises</h6>
+                        <ul class="list-unstyled" id="action-log-list">
+                            <li class="text-muted">Aucune action entreprise pour l'instant.</li>
+                        </ul>
+                    </div>
+                </div>
+        
+                <!-- Console des Actions à Droite -->
+                <div class="d-flex flex-column align-items-start" style="width: 250px;">
+                    <button class="btn btn-danger w-100 mb-3" id="delete-rows-btn">
+                        <i class="bi bi-trash"></i> Supprimer Lignes
+                    </button>
+                    <button class="btn btn-warning w-100 mb-3" id="delete-columns-btn">
+                        <i class="bi bi-x-square"></i> Supprimer Colonnes
+                    </button>
+                    <button class="btn btn-info w-100 mb-3" id="filter-data-btn">
+                        <i class="bi bi-funnel"></i> Filtrer Données
+                    </button>
+                    <button class="btn btn-success w-100 mb-3" id="change-type-btn">
+                        <i class="bi bi-pencil-square"></i> Changer Type
+                    </button>
+                    <button class="btn btn-secondary w-100" id="reset-btn">
+                        <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+                    </button>
+                </div>
+            </div>
+        
+<!-- Footer pour les autres actions -->
+<div class="card-footer d-flex justify-content-between">
+    <button class="btn btn-outline-primary" id="view-dataset-btn" data-bs-toggle="modal" data-bs-target="#datasetModal">
+        <i class="bi bi-table"></i> Visualiser
+    </button>
+
+    <button class="btn btn-outline-info" id="analyze-dataset-btn">
+        <i class="bi bi-graph-up"></i> Analyser
+    </button>
+
+    <button class="btn btn-outline-success" id="save-dataset-btn">
+        <i class="bi bi-save"></i> Sauvegarder
+    </button>
+</div>
+
+<!-- Modale pour la visualisation complète -->
+<div class="modal fade" id="datasetModal" tabindex="-1" aria-labelledby="datasetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="datasetModalLabel">Visualisation complète du dataset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Contenu du dataset -->
+                <div id="full-dataset-container" class="table-responsive">
+                    <p class="text-muted text-center">Chargement des données...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
         </div>
+    </div>
+</div>
+        </div>        
     </div>
 </div>
 
@@ -31,3 +115,4 @@
 <link rel="stylesheet" href="{% static 'data_cleaning/css/data_cleaning.css' %}">
 <script src="{% static 'data_cleaning/js/data_cleaning.js' %}" defer></script>
 {% endblock %}
+

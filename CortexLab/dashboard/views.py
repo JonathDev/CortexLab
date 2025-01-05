@@ -170,14 +170,6 @@ def analyze_data(request, id):
 
 
 
-
-
-
-
-
-
-
-
 @csrf_exempt
 @login_required
 def set_target(request, id):
