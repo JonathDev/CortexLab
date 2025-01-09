@@ -2,6 +2,11 @@ from django.shortcuts import render
 from django.http import JsonResponse
 from dashboard.models import Project
 
+from django.views.decorators.csrf import csrf_exempt
+from bson import ObjectId  # Import pour gérer ObjectId de MongoDB
+import json
+
+
 
 def analyze_home(request):
     """
@@ -115,3 +120,49 @@ def get_full_dataset(request, dataset_id):
     except Exception as e:
         print(f"Erreur lors du traitement de la requête pour {dataset_id}: {e}")
         return JsonResponse({"success": False, "error": str(e)})
+
+
+@csrf_exempt
+def delete_column(request, dataset_id):
+    """
+    Vue pour supprimer une ou plusieurs colonnes d'un dataset spécifique.
+    """
+    if request.method == "POST":
+        try:
+            # Convertir en ObjectId si nécessaire
+            try:
+                dataset_object_id = ObjectId(dataset_id)
+            except Exception as e:
+                return JsonResponse({"success": False, "error": "L'ID du dataset n'est pas un ObjectId valide."}, status=400)
+
+            # Récupérer le projet contenant le dataset
+            project = Project.objects.get(datasets__id=dataset_object_id)
+            dataset = next(ds for ds in project.datasets if str(ds.id) == dataset_id)
+
+            # Charger le corps de la requête
+            body = json.loads(request.body)
+            columns_to_delete = body.get("columns", [])
+
+            if not columns_to_delete:
+                return JsonResponse({"success": False, "error": "Aucune colonne spécifiée."}, status=400)
+
+            # Vérifier si les colonnes existent
+            column_names = [col.name for col in dataset.columns]
+            invalid_columns = [col for col in columns_to_delete if col not in column_names]
+
+            if invalid_columns:
+                return JsonResponse({"success": False, "error": f"Colonnes invalides : {', '.join(invalid_columns)}"}, status=404)
+
+            # Supprimer les colonnes
+            dataset.columns = [col for col in dataset.columns if col.name not in columns_to_delete]
+
+            # Sauvegarder le projet après modification
+            project.save()
+
+            return JsonResponse({"success": True, "message": f"Colonnes supprimées : {', '.join(columns_to_delete)}"})
+        except Project.DoesNotExist:
+            return JsonResponse({"success": False, "error": "Projet ou dataset non trouvé."}, status=404)
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+    return JsonResponse({"success": False, "error": "Méthode non autorisée."}, status=405)

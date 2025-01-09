@@ -1,3 +1,11 @@
+function getCsrfToken() {
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    if (!csrfToken) {
+        console.error("CSRF token introuvable. Assurez-vous que votre formulaire inclut un CSRF token.");
+    }
+    return csrfToken;
+}
+
 document.addEventListener("DOMContentLoaded", function () {
     console.log("DOM entièrement chargé.");
 
@@ -33,10 +41,31 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
         console.warn("Bouton 'Visualiser' introuvable dans le DOM.");
     }
+
+    // Initialisation du bouton "Supprimer Colonnes"
+    const deleteColumnsBtn = document.getElementById("delete-columns-btn");
+    if (deleteColumnsBtn) {
+        deleteColumnsBtn.addEventListener("click", function () {
+            const datasetSelector = document.getElementById("dataset-selector");
+            const datasetId = datasetSelector ? datasetSelector.value : null;
+
+            if (!datasetId) {
+                alert("Veuillez sélectionner un dataset pour gérer les colonnes.");
+                return;
+            }
+
+            console.log(`Ouverture de la modal pour suppression des colonnes pour le dataset ID : ${datasetId}`);
+            openDeleteColumnsModal(datasetId);
+        });
+    } else {
+        console.warn("Bouton 'Supprimer Colonnes' introuvable dans le DOM.");
+    }
 });
 
-const datasetCache = {}; // Cache des datasets
+// Cache pour stocker les données localement
+const datasetCache = {};
 
+// Fonction pour initialiser la sélection des datasets
 function initDatasetSelection() {
     console.log("Initialisation des sélections de datasets.");
     const datasetSelector = document.getElementById("dataset-selector");
@@ -77,6 +106,7 @@ function initDatasetSelection() {
     }
 }
 
+// Chargement des détails d'un dataset spécifique
 async function loadDatasetDetails(datasetId) {
     console.log("Chargement des détails pour le dataset ID :", datasetId);
     if (!datasetId) {
@@ -113,6 +143,7 @@ async function loadDatasetDetails(datasetId) {
     }
 }
 
+// Mise à jour de la visualisation des données
 function updateDatasetVisualization(data) {
     console.log("Mise à jour de la section de visualisation avec les données :", data);
 
@@ -127,15 +158,11 @@ function updateDatasetVisualization(data) {
         return;
     }
 
-    // Construire l'entête du tableau
     const tableHeaders = data.columns.map(col => `<th>${col}</th>`).join("");
-
-    // Construire les lignes du tableau
     const tableRows = data.preview.map(row => `
         <tr>${data.columns.map(col => `<td>${row[col] || ''}</td>`).join("")}</tr>
     `).join("");
 
-    // Mettre à jour le contenu HTML de la visualisation
     visualizationDiv.innerHTML = `
         <h6>Visualisation des Données</h6>
         <p><strong>Nom du dataset :</strong> ${data.name}</p>
@@ -153,50 +180,106 @@ function updateDatasetVisualization(data) {
     console.log("Visualisation mise à jour avec succès.");
 }
 
-async function loadFullDataset(datasetId) {
-    console.log(`Tentative de chargement complet pour dataset ID : ${datasetId}`);
+// Ouvrir la modal pour supprimer des colonnes
+function openDeleteColumnsModal(datasetId) {
+    const columnsContainer = document.getElementById("columns-checkboxes");
+    columnsContainer.innerHTML = ""; // Vider les colonnes précédentes dans la modal
 
-    const container = document.getElementById("full-dataset-container");
-    if (!container) {
-        console.error("Erreur : L'élément #full-dataset-container est introuvable dans le DOM.");
+    if (!datasetCache[datasetId]) {
+        console.error("Dataset non trouvé dans le cache. Chargement nécessaire.");
+        loadDatasetToCache(datasetId, function () {
+            populateDeleteColumnsModal(datasetId);
+        });
+    } else {
+        populateDeleteColumnsModal(datasetId);
+    }
+
+    // Afficher la modal
+    const deleteColumnsModal = new bootstrap.Modal(document.getElementById("deleteColumnsModal"));
+    deleteColumnsModal.show();
+}
+
+// Charger les colonnes dans la modal
+function populateDeleteColumnsModal(datasetId) {
+    console.log(`Population des colonnes pour la suppression dans la modal pour le dataset ID : ${datasetId}`);
+
+    const dataset = datasetCache[datasetId];
+    const columnsContainer = document.getElementById("columns-checkboxes");
+
+    dataset.columns.forEach((column) => {
+        const checkboxHTML = `
+            <div class="form-check">
+                <input class="form-check-input" type="checkbox" value="${column}" id="col-${column}">
+                <label class="form-check-label" for="col-${column}">${column}</label>
+            </div>
+        `;
+        columnsContainer.innerHTML += checkboxHTML;
+    });
+}
+
+// Confirmation de suppression des colonnes
+document.getElementById("confirm-delete-columns-btn").addEventListener("click", function () {
+    const datasetSelector = document.getElementById("dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+
+    if (!datasetId) {
+        alert("Aucun dataset sélectionné.");
         return;
     }
 
-    try {
-        const response = await fetch(`/data_cleaning/dataset/full/${datasetId}/`);
-        console.log("Requête envoyée :", response.url);
+    const selectedColumns = Array.from(document.querySelectorAll("#columns-checkboxes .form-check-input:checked")).map(checkbox => checkbox.value);
 
-        if (response.ok) {
-            const result = await response.json();
-            console.log("Données reçues :", result);
-
-            if (result.success && result.columns && result.rows) {
-                // Construire la table pour afficher les données
-                let tableHTML = `<table class="table table-bordered"><thead><tr>`;
-                result.columns.forEach(col => {
-                    tableHTML += `<th>${col}</th>`;
-                });
-                tableHTML += `</tr></thead><tbody>`;
-                result.rows.forEach(row => {
-                    tableHTML += `<tr>`;
-                    result.columns.forEach(col => {
-                        tableHTML += `<td>${row[col] || ""}</td>`;
-                    });
-                    tableHTML += `</tr>`;
-                });
-                tableHTML += `</tbody></table>`;
-                container.innerHTML = tableHTML;
-                console.log("Données affichées dans la modale avec succès.");
-            } else {
-                console.error("Erreur dans les données reçues :", result.error);
-                container.innerHTML = `<p class="text-danger">Erreur : Les données sont incomplètes ou corrompues.</p>`;
-            }
-        } else {
-            console.error("Erreur dans la requête API :", response.status);
-            container.innerHTML = `<p class="text-danger">Erreur lors du chargement des données.</p>`;
-        }
-    } catch (error) {
-        console.error("Erreur réseau :", error);
-        container.innerHTML = `<p class="text-danger">Erreur réseau. Veuillez réessayer.</p>`;
+    if (selectedColumns.length === 0) {
+        alert("Veuillez sélectionner au moins une colonne à supprimer.");
+        return;
     }
+
+    console.log(`Colonnes sélectionnées pour suppression : ${selectedColumns.join(", ")}`);
+
+    // Suppression des colonnes dans le cache
+    if (datasetCache[datasetId]) {
+        datasetCache[datasetId].columns = datasetCache[datasetId].columns.filter(col => !selectedColumns.includes(col));
+
+        datasetCache[datasetId].rows = datasetCache[datasetId].rows.map(row => {
+            const updatedRow = {};
+            Object.keys(row).forEach(key => {
+                if (!selectedColumns.includes(key)) {
+                    updatedRow[key] = row[key];
+                }
+            });
+            return updatedRow;
+        });
+
+        // Mise à jour de la visualisation
+        updateDatasetVisualization(datasetCache[datasetId]);
+
+        // Ajouter une action dans "Actions Entreprises"
+        const actionLogList = document.getElementById("action-log-list");
+        const actionItem = `<li>Suppression des colonnes : ${selectedColumns.join(", ")}</li>`;
+        actionLogList.innerHTML += actionItem;
+
+        // Fermer la modal
+        const deleteColumnsModal = bootstrap.Modal.getInstance(document.getElementById("deleteColumnsModal"));
+        deleteColumnsModal.hide();
+    } else {
+        console.error("Erreur : Dataset non trouvé dans le cache.");
+    }
+});
+
+// Charger un dataset dans le cache
+function loadDatasetToCache(datasetId, callback) {
+    fetch(`/data_cleaning/dataset/${datasetId}/`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                datasetCache[datasetId] = data.data;
+                console.log(`Dataset ID ${datasetId} chargé dans le cache.`);
+                if (callback) callback();
+            } else {
+                console.error(`Erreur lors du chargement du dataset : ${data.error}`);
+            }
+        })
+        .catch(error => {
+            console.error("Erreur réseau lors du chargement du dataset :", error);
+        });
 }

@@ -38,7 +38,7 @@
 
 /* Visualisation et log */
 #dataset-visualization, #action-log {
-    height: 250px;
+    height: 550px;
     overflow-y: auto;
 }
 

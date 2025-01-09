@@ -8,4 +8,5 @@ urlpatterns = [
     path('dataset/<str:dataset_id>/', views.dataset_detail, name='dataset_detail'),
     path('get_dataset_info/<str:dataset_id>/', views.get_dataset_info, name='get_dataset_info'),
     path('dataset/full/<str:dataset_id>/', views.get_full_dataset, name='get_full_dataset'),
+    path('dataset/<str:dataset_id>/delete_column/', views.delete_column, name='delete_columns'),
 ]

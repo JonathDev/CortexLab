@@ -107,6 +107,32 @@
         </div>
     </div>
 </div>
+<!-- Modale pour la suppression des colonnes -->
+<div class="modal fade" id="deleteColumnsModal" tabindex="-1" aria-labelledby="deleteColumnsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteColumnsModalLabel">Supprimer des colonnes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="delete-columns-form">
+                    <input type="hidden" name="csrfmiddlewaretoken" value="{{ csrf_token }}">
+                    {% csrf_token %}
+                    <p>Sélectionnez les colonnes à supprimer :</p>
+                    <div id="columns-checkboxes" class="form-check">
+                        <!-- Les checkbox seront ajoutées dynamiquement ici -->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" id="confirm-delete-columns-btn" class="btn btn-danger">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
         </div>        
     </div>
 </div>
