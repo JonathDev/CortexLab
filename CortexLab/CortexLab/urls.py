@@ -30,5 +30,6 @@ urlpatterns = [
     path('', include('main.urls', namespace='main')),
     path('accounts/', include('accounts.urls', namespace='accounts')),
     path('dashboard/', include('dashboard.urls', namespace='dashboard')),
-     path('data_cleaning/', include('data_cleaning.urls')),
+    path('data_cleaning/', include('data_cleaning.urls', namespace='data_cleaning')),
+
 ]

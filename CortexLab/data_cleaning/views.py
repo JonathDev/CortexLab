@@ -1,168 +1,106 @@
 from django.shortcuts import render
 from django.http import JsonResponse
-from dashboard.models import Project
-
 from django.views.decorators.csrf import csrf_exempt
-from bson import ObjectId  # Import pour gérer ObjectId de MongoDB
+from bson import ObjectId  # Pour manipuler les ObjectId de MongoDB
+from dashboard.models import Project
+from .utilis import load_dataset, remove_columns, dataframe_to_json
 import json
 
+# Cache global pour stocker les datasets modifiés
+dataset_cache = {}
 
-
+# Vue principale pour la gestion des datasets
 def analyze_home(request):
     """
-    Vue principale pour afficher les datasets sélectionnés.
+    Vue principale pour afficher les datasets sélectionnés et les charger dans le cache.
     """
-    # Récupérer les IDs transmis dans l'URL
     dataset_ids = request.GET.get('datasets', '').split(',')
-    print("Dataset IDs reçus :", dataset_ids)
-
-    # Récupérer les datasets correspondant aux IDs
     datasets = []
+
     for project in Project.objects.all():
-        print(f"Vérification du projet : {project.name}")
         for dataset in project.datasets:
-            if str(dataset.id) in dataset_ids:  # Comparaison d'ID sous forme de chaîne
-                print(f"Dataset ajouté : {dataset.name}")
+            if str(dataset.id) in dataset_ids:
                 datasets.append(dataset)
+                # Charger le dataset dans le cache
+                dataset_cache[str(dataset.id)] = {
+                    "name": dataset.name,
+                    "uploaded_at": dataset.uploaded_at.isoformat(),
+                    "columns": [col.name for col in dataset.columns],
+                    "rows_count": len(dataset.columns[0].values) if dataset.columns else 0,
+                    "preview": [
+                        {col.name: col.values[i] for col in dataset.columns}
+                        for i in range(min(10, len(dataset.columns[0].values)))
+                    ] if dataset.columns else []
+                }
+                print(f"Dataset ajouté au cache : {dataset.name} (ID : {dataset.id})")
 
-    # Déboguer les datasets récupérés
-    print("Datasets récupérés :", [dataset.name for dataset in datasets])
-
-    # Passer les datasets au template
     context = {'datasets': datasets}
     return render(request, 'data_cleaning/analyze.html', context)
 
-
+# Vue pour récupérer les détails d'un dataset depuis le cache
 def dataset_detail(request, dataset_id):
-    try:
-        # Récupérer le projet contenant le dataset
-        project = Project.objects(datasets__id=dataset_id).first()
-        if not project:
-            return JsonResponse({"success": False, "error": "Projet contenant ce dataset non trouvé."})
-
-        # Trouver le dataset dans la liste des datasets du projet
-        dataset = next((ds for ds in project.datasets if ds.id == dataset_id), None)
-        if not dataset:
-            return JsonResponse({"success": False, "error": "Dataset non trouvé dans le projet."})
-
-        # Extraire les données nécessaires
-        data = {
-            "success": True,
-            "data": {
-                "name": dataset.name,
-                "uploaded_at": dataset.uploaded_at.isoformat(),
-                "columns": [col.name for col in dataset.columns],
-                "rows_count": len(dataset.columns[0].values) if dataset.columns else 0,
-                "preview": [
-                    {col.name: col.values[i] for col in dataset.columns}
-                    for i in range(min(5, len(dataset.columns[0].values)))  # Max 5 lignes
-                ] if dataset.columns else []
-            }
-        }
-
-        return JsonResponse(data)
-
-    except Exception as e:
-        return JsonResponse({"success": False, "error": str(e)})
-
-
-
-def get_dataset_info(request, dataset_id):
-    """
-    Vue pour récupérer des informations détaillées d'un dataset pour l'afficher dans la visualisation.
-    """
-    print(f"Requête reçue pour obtenir les infos du dataset : {dataset_id}")
-    try:
-        # Récupérer le projet contenant le dataset
-        project = Project.objects.get(datasets__id=dataset_id)
-        print(f"Projet trouvé : {project.name}")
-
-        dataset = next(ds for ds in project.datasets if str(ds.id) == dataset_id)
-        print(f"Dataset trouvé : {dataset.name}")
-
-        # Construire les données pour la réponse
-        data = {
-            "rows_count": len(dataset.data),  # Remplacez par la méthode réelle pour compter les lignes
-            "columns": list(dataset.columns.keys()),  # Assurez-vous que columns est un dict
-            "preview": dataset.data[:5]  # Les 5 premières lignes du dataset
-        }
-
-        print("Données retournées :", data)
+    print(f"Requête pour le dataset ID : {dataset_id}")
+    if dataset_id in dataset_cache:
+        data = dataset_cache[dataset_id]
+        print(f"Dataset trouvé dans le cache : {data['name']}")
         return JsonResponse({"success": True, "data": data})
+    else:
+        print("Erreur : Dataset introuvable dans le cache.")
+        return JsonResponse({"success": False, "error": "Dataset introuvable dans le cache."}, status=404)
 
-    except Project.DoesNotExist:
-        print("Projet ou dataset introuvable")
-        return JsonResponse({"success": False, "error": "Projet ou dataset introuvable."}, status=404)
-
-    except Exception as e:
-        print(f"Erreur dans get_dataset_info : {e}")
-        return JsonResponse({"success": False, "error": "Une erreur est survenue."}, status=500)
-
-
-def get_full_dataset(request, dataset_id):
-    try:
-        print(f"Requête reçue pour le dataset complet avec ID : {dataset_id}")
-        project = Project.objects.get(datasets__id=dataset_id)
-        dataset = next(ds for ds in project.datasets if str(ds.id) == dataset_id)
-
-        # Préparer les données pour la réponse JSON
-        data = {
-            "success": True,
-            "columns": [col.name for col in dataset.columns],
-            "rows": [
-                {col.name: col.values[i] for col in dataset.columns}
-                for i in range(len(dataset.columns[0].values))
-            ]  # Toutes les lignes
-        }
-
-        print(f"Données renvoyées : {data}")
-        return JsonResponse(data)
-    except Exception as e:
-        print(f"Erreur lors du traitement de la requête pour {dataset_id}: {e}")
-        return JsonResponse({"success": False, "error": str(e)})
-
-
+# Vue pour supprimer des colonnes d'un dataset dans le cache
 @csrf_exempt
 def delete_column(request, dataset_id):
     """
-    Vue pour supprimer une ou plusieurs colonnes d'un dataset spécifique.
+    Supprime des colonnes du dataset dans le cache.
     """
+    print(f"Requête pour suppression des colonnes pour le dataset ID : {dataset_id}")
+
     if request.method == "POST":
         try:
-            # Convertir en ObjectId si nécessaire
-            try:
-                dataset_object_id = ObjectId(dataset_id)
-            except Exception as e:
-                return JsonResponse({"success": False, "error": "L'ID du dataset n'est pas un ObjectId valide."}, status=400)
+            # Vérifier si le dataset est dans le cache
+            if dataset_id not in dataset_cache:
+                print("Erreur : Dataset introuvable dans le cache.")
+                return JsonResponse({"success": False, "error": "Dataset introuvable dans le cache."}, status=404)
 
-            # Récupérer le projet contenant le dataset
-            project = Project.objects.get(datasets__id=dataset_object_id)
-            dataset = next(ds for ds in project.datasets if str(ds.id) == dataset_id)
+            # Charger le dataset depuis le cache
+            cached_dataset = dataset_cache[dataset_id]
+            print(f"Dataset chargé depuis le cache : {cached_dataset['name']}")
 
-            # Charger le corps de la requête
+            # Charger les colonnes à supprimer depuis le corps de la requête
             body = json.loads(request.body)
             columns_to_delete = body.get("columns", [])
+            print(f"Colonnes à supprimer : {columns_to_delete}")
 
             if not columns_to_delete:
+                print("Aucune colonne spécifiée dans la requête.")
                 return JsonResponse({"success": False, "error": "Aucune colonne spécifiée."}, status=400)
 
-            # Vérifier si les colonnes existent
-            column_names = [col.name for col in dataset.columns]
+            # Vérifier l'existence des colonnes
+            column_names = cached_dataset["columns"]
             invalid_columns = [col for col in columns_to_delete if col not in column_names]
 
             if invalid_columns:
-                return JsonResponse({"success": False, "error": f"Colonnes invalides : {', '.join(invalid_columns)}"}, status=404)
+                print(f"Colonnes invalides : {invalid_columns}")
+                return JsonResponse({"success": False, "error": f"Colonnes non valides : {', '.join(invalid_columns)}"}, status=404)
 
-            # Supprimer les colonnes
-            dataset.columns = [col for col in dataset.columns if col.name not in columns_to_delete]
+            # Supprimer les colonnes spécifiées
+            cached_dataset["columns"] = [col for col in cached_dataset["columns"] if col not in columns_to_delete]
+            cached_dataset["preview"] = [
+                {key: row[key] for key in row if key not in columns_to_delete}
+                for row in cached_dataset["preview"]
+            ]
+            print(f"Colonnes restantes : {cached_dataset['columns']}")
 
-            # Sauvegarder le projet après modification
-            project.save()
+            # Mettre à jour le cache
+            dataset_cache[dataset_id] = cached_dataset
+            print("Cache mis à jour avec succès.")
 
             return JsonResponse({"success": True, "message": f"Colonnes supprimées : {', '.join(columns_to_delete)}"})
-        except Project.DoesNotExist:
-            return JsonResponse({"success": False, "error": "Projet ou dataset non trouvé."}, status=404)
+
         except Exception as e:
+            print(f"Erreur inconnue : {e}")
             return JsonResponse({"success": False, "error": str(e)}, status=500)
 
+    print("Erreur : Méthode HTTP non autorisée.")
     return JsonResponse({"success": False, "error": "Méthode non autorisée."}, status=405)
