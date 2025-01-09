@@ -213,3 +213,72 @@ document.getElementById("confirm-delete-columns-btn").addEventListener("click", 
     const deleteColumnsModal = bootstrap.Modal.getInstance(document.getElementById("deleteColumnsModal"));
     deleteColumnsModal.hide();
 });
+
+
+
+
+// Gérer l'ouverture de la modal pour suppression des lignes
+document.getElementById("delete-rows-btn").addEventListener("click", function () {
+    const datasetSelector = document.getElementById("dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+
+    if (!datasetId) {
+        alert("Veuillez sélectionner un dataset pour gérer les lignes.");
+        console.error("Erreur : Aucun dataset sélectionné.");
+        return;
+    }
+
+    console.log(`Ouverture de la modal pour suppression des lignes pour le dataset ID : ${datasetId}`);
+    openDeleteRowsModal(datasetId);
+});
+
+// Ouvrir la modal pour suppression des lignes
+function openDeleteRowsModal(datasetId) {
+    console.log(`Ouverture de la modal pour suppression des lignes pour le dataset ID : ${datasetId}`);
+
+    const deleteRowsModal = new bootstrap.Modal(document.getElementById("deleteRowsModal"));
+    deleteRowsModal.show();
+}
+
+// Supprimer les lignes après validation
+document.getElementById("confirm-delete-rows-btn").addEventListener("click", function () {
+    const datasetSelector = document.getElementById("dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+
+    if (!datasetId) {
+        alert("Aucun dataset sélectionné.");
+        return;
+    }
+
+    const startLineInput = document.getElementById("start-line");
+    const endLineInput = document.getElementById("end-line");
+
+    const startLine = parseInt(startLineInput.value);
+    const endLine = parseInt(endLineInput.value);
+
+    if (isNaN(startLine) || isNaN(endLine) || startLine < 0 || endLine < startLine) {
+        alert("Veuillez entrer une plage de lignes valide.");
+        return;
+    }
+
+    console.log(`Suppression des lignes : de ${startLine} à ${endLine}`);
+    removeRowsFromCache(datasetId, startLine, endLine);
+
+    // Fermer la modal
+    const deleteRowsModal = bootstrap.Modal.getInstance(document.getElementById("deleteRowsModal"));
+    deleteRowsModal.hide();
+});
+
+// Suppression des lignes dans le cache
+function removeRowsFromCache(datasetId, startLine, endLine) {
+    const dataset = datasetCache[datasetId];
+    if (!dataset) {
+        console.error("Erreur : Dataset non trouvé dans le cache.");
+        return;
+    }
+
+    dataset.preview = dataset.preview.filter((row, index) => index < startLine || index > endLine);
+
+    console.log(`Lignes supprimées dans le cache : de ${startLine} à ${endLine}`);
+    updateDatasetVisualization(dataset);
+}

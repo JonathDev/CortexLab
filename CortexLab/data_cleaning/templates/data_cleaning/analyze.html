@@ -107,6 +107,8 @@
         </div>
     </div>
 </div>
+
+<!-- Modale pour la suppression des colonnes -->
 <div class="modal fade" id="deleteColumnsModal" tabindex="-1" aria-labelledby="deleteColumnsModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -126,7 +128,33 @@
         </div>
     </div>
 </div>
-
+<!-- Modale pour la suppression des lignes -->
+<div class="modal fade" id="deleteRowsModal" tabindex="-1" role="dialog" aria-labelledby="deleteRowsModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteRowsModalLabel">Supprimer des lignes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="delete-rows-form">
+                    <div class="form-group">
+                        <label for="start-line">Ligne de début :</label>
+                        <input type="number" id="start-line" class="form-control" placeholder="Entrez la ligne de début" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="end-line">Ligne de fin :</label>
+                        <input type="number" id="end-line" class="form-control" placeholder="Entrez la ligne de fin" min="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button id="confirm-delete-rows-btn" type="button" class="btn btn-danger">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
 
         </div>        
     </div>

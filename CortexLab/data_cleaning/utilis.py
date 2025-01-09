@@ -53,3 +53,17 @@ def dataframe_to_json(df):
         "rows_count": len(df),
         "preview": df.head(10).to_dict(orient="records")
     }
+
+
+def remove_rows(df, start_line, end_line):
+    """
+    Supprime les lignes d'un DataFrame selon une plage spécifiée.
+    """
+    try:
+        print(f"Suppression des lignes de {start_line} à {end_line} dans le DataFrame.")
+        df = df.drop(df.index[start_line:end_line + 1]).reset_index(drop=True)
+        print("DataFrame après suppression des lignes :")
+        print(df.head())
+        return df
+    except Exception as e:
+        raise ValueError(f"Erreur lors de la suppression des lignes : {e}")
