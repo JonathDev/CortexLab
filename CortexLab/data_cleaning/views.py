@@ -3,7 +3,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from bson import ObjectId  # Pour manipuler les ObjectId de MongoDB
 from dashboard.models import Project
-from .utilis import load_dataset, remove_columns, dataframe_to_json
+from .utilis import load_dataset, remove_columns, dataframe_to_json, dataframe_to_dict, fill_missing_values, remove_missing_values 
 import json
 
 # Cache global pour stocker les datasets modifiés
@@ -157,3 +157,38 @@ def delete_rows(request, dataset_id):
     print("Erreur : Méthode HTTP non autorisée.")
     return JsonResponse({"success": False, "error": "Méthode non autorisée."}, status=405)
 
+
+@csrf_exempt
+def manage_missing_values(request, dataset_id):
+    """
+    Gère les valeurs manquantes dans le dataset en cache.
+    """
+    if request.method == "POST":
+        try:
+            if dataset_id not in dataset_cache:
+                return JsonResponse({"success": False, "error": "Dataset introuvable dans le cache."}, status=404)
+
+            body = json.loads(request.body)
+            action = body.get("action")
+            method = body.get("method", None)
+            value = body.get("value", None)
+            column = body.get("column", None)
+            threshold = body.get("threshold", 0.5)
+
+            dataset = dataset_cache[dataset_id]
+
+            if action == "delete":
+                axis = body.get("axis", "rows")
+                dataset = remove_missing_values(dataset, axis=axis, threshold=threshold)
+            elif action == "fill":
+                dataset = fill_missing_values(dataset, method=method, value=value, column=column)
+            else:
+                return JsonResponse({"success": False, "error": "Action invalide."}, status=400)
+
+            dataset_cache[dataset_id] = dataset
+            return JsonResponse({"success": True, "message": "Gestion des valeurs manquantes effectuée avec succès."})
+
+        except Exception as e:
+            return JsonResponse({"success": False, "error": str(e)}, status=500)
+
+    return JsonResponse({"success": False, "error": "Méthode non autorisée."}, status=405)

@@ -282,3 +282,88 @@ function removeRowsFromCache(datasetId, startLine, endLine) {
     console.log(`Lignes supprimées dans le cache : de ${startLine} à ${endLine}`);
     updateDatasetVisualization(dataset);
 }
+
+document.getElementById("manage-missing-values-btn").addEventListener("click", function () {
+    const datasetSelector = document.getElementById("dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+
+    if (!datasetId) {
+        alert("Veuillez sélectionner un dataset.");
+        return;
+    }
+
+    const modal = new bootstrap.Modal(document.getElementById("manageMissingValuesModal"));
+    modal.show();
+});
+
+document.getElementById("manage-missing-values-btn").addEventListener("click", function () {
+    const datasetSelector = document.getElementById("dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+
+    if (!datasetId) {
+        alert("Veuillez sélectionner un dataset.");
+        return;
+    }
+
+    populateColumnSelection(datasetId); // Ajouter les colonnes dans le dropdown
+    const modal = new bootstrap.Modal(document.getElementById("manageMissingValuesModal"));
+    modal.show();
+});
+
+function populateColumnSelection(datasetId) {
+    const dataset = datasetCache[datasetId];
+    const columnSelection = document.getElementById("column-selection");
+
+    if (!dataset || !dataset.columns) {
+        console.error("Erreur : Dataset ou colonnes non trouvés dans le cache.");
+        return;
+    }
+
+    columnSelection.innerHTML = '<option value="" selected disabled>-- Sélectionnez une colonne --</option>';
+    dataset.columns.forEach(column => {
+        columnSelection.innerHTML += `<option value="${column}">${column}</option>`;
+    });
+}
+
+document.getElementById("confirm-manage-missing-values-btn").addEventListener("click", function () {
+    const datasetSelector = document.getElementById("dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+    const selectedAction = document.querySelector('input[name="missing-values-action"]:checked');
+    const selectedColumn = document.getElementById("column-selection").value;
+    const defaultValue = document.getElementById("default-value").value;
+
+    if (!selectedAction) {
+        alert("Veuillez sélectionner une action.");
+        return;
+    }
+
+    if (!selectedColumn && selectedAction.value.startsWith("fill")) {
+        alert("Veuillez sélectionner une colonne pour remplir les valeurs manquantes.");
+        return;
+    }
+
+    fetch(`/data_cleaning/dataset/${datasetId}/manage_missing_values/`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": getCsrfToken(),
+        },
+        body: JSON.stringify({
+            action: selectedAction.value.startsWith("delete") ? "delete" : "fill",
+            axis: selectedAction.value.endsWith("rows") ? "rows" : "columns",
+            column: selectedColumn,
+            method: selectedAction.value.split("-")[1],
+            value: defaultValue || null,
+        }),
+    })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log(data.message);
+                loadDatasetDetails(datasetId); // Recharger les données après modification
+            } else {
+                alert(`Erreur : ${data.error}`);
+            }
+        })
+        .catch(error => console.error("Erreur réseau :", error));
+});

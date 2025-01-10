@@ -21,4 +21,8 @@ urlpatterns = [
     # Vue pour supprimer des colonnes d'un dataset
     path('dataset/<str:dataset_id>/delete_column/', views.delete_column, name='delete_columns'),
 
+     # Vue pour gerer les valeurs manquantes d'un dataset
+    path('dataset/<str:dataset_id>/manage_missing_values/', views.manage_missing_values, name='manage_missing_values'),
+
+
 ]

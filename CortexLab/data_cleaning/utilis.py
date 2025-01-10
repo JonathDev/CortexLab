@@ -67,3 +67,62 @@ def remove_rows(df, start_line, end_line):
         return df
     except Exception as e:
         raise ValueError(f"Erreur lors de la suppression des lignes : {e}")
+
+def remove_missing_values(dataset, axis='rows', threshold=0.5):
+    """
+    Supprime les lignes ou colonnes contenant des valeurs manquantes au-delà d'un seuil.
+    
+    Parameters:
+        dataset (dict): Dataset au format JSON-like.
+        axis (str): 'rows' pour supprimer les lignes, 'columns' pour supprimer les colonnes.
+        threshold (float): Proportion maximale de valeurs manquantes tolérées.
+    """
+    df = pd.DataFrame(dataset["preview"])
+    missing_ratio = df.isnull().mean(axis=0 if axis == 'columns' else 1)
+    if axis == 'rows':
+        df = df[missing_ratio <= threshold]
+    elif axis == 'columns':
+        df = df.loc[:, missing_ratio <= threshold]
+    return dataframe_to_dict(df)
+
+def fill_missing_values(dataset, method='default', value=None, column=None):
+    """
+    Remplit les valeurs manquantes dans le dataset ou une colonne spécifique.
+
+    Parameters:
+        dataset (dict): Dataset au format JSON-like.
+        method (str): Méthode ('default', 'mean', 'median', 'interpolate').
+        value (Any): Valeur pour le remplissage si `method='default'`.
+        column (str): Colonne spécifique à traiter.
+    """
+    df = pd.DataFrame(dataset["preview"])
+    if column:
+        if method == 'default':
+            df[column] = df[column].fillna(value)
+        elif method == 'mean':
+            df[column] = df[column].fillna(df[column].mean())
+        elif method == 'median':
+            df[column] = df[column].fillna(df[column].median())
+        elif method == 'interpolate':
+            df[column] = df[column].interpolate(method='linear', limit_direction='forward')
+    else:
+        if method == 'default':
+            df = df.fillna(value)
+        elif method == 'mean':
+            df = df.fillna(df.mean(numeric_only=True))
+        elif method == 'median':
+            df = df.fillna(df.median(numeric_only=True))
+        elif method == 'interpolate':
+            df = df.interpolate(method='time', limit_direction='forward', axis=0)
+    return dataframe_to_dict(df)
+
+def dataframe_to_dict(df):
+    """
+    Convertit un DataFrame en dict JSON-like pour le frontend.
+    """
+    return {
+        "columns": df.columns.tolist(),
+        "rows_count": len(df),
+        "preview": df.to_dict(orient="records")
+    }
+
