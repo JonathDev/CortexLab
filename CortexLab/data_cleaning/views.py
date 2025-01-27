@@ -77,7 +77,7 @@ def get_selected_datasets(request):
 
 
 
-login_required
+@login_required
 def load_dataset(request, dataset_id):
     print(f"function : load_dataset {dataset_id}")
     project_id = request.session.get("current_project_id")
@@ -97,11 +97,15 @@ def load_dataset(request, dataset_id):
             "name": dataset.name,
             "columns": [col.name for col in dataset.columns],
             "rows": [
-                {col.name: value for col, value in zip(dataset.columns, row)}
-                for row in zip(*(col.values for col in dataset.columns))
+                {
+                    "row_id": index + 1,  # Ajout de l'ID de la ligne
+                    **{col.name: value for col, value in zip(dataset.columns, row)}
+                }
+                for index, row in enumerate(zip(*(col.values for col in dataset.columns)))
             ],
         }
         print("Data envoyée :", data)
         return JsonResponse(data)
     except Exception as e:
+        print(f"Erreur : {e}")
         return JsonResponse({"error": f"Erreur lors du chargement du dataset : {str(e)}"}, status=500)

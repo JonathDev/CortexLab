@@ -1,10 +1,11 @@
 /* Structure générale */
 .container-fluid {
+    margin-top: 70px !important; 
     display: flex;
     margin-top: 0;
     --bs-gutter-x: 0 !important;
     font-family: 'Arial', sans-serif;
-    min-height: calc(100vh - 70px); /* Ajustement pour la navbar */
+   
 }
 
 /* Sidebar */
