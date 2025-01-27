@@ -3,7 +3,7 @@ from django import forms
 
 
 class ProjectForm(forms.Form):
-    name = forms.CharField(max_length=255, label='Nom du Projet')
+    name = forms.CharField(max_length=255, label='Nom du Projet', required=True)
     description = forms.CharField(
         max_length=255,
         label='Description',

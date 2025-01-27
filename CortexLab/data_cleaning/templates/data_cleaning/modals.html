@@ -1,0 +1,125 @@
+<!-- Modale pour la visualisation complète -->
+<div class="modal fade" id="datasetModal" tabindex="-1" aria-labelledby="datasetModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="datasetModalLabel">Visualisation complète du dataset</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Contenu du dataset -->
+                <div id="full-dataset-container" class="table-responsive">
+                    <p class="text-muted text-center">Chargement des données...</p>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modale pour la suppression des colonnes -->
+<div class="modal fade" id="deleteColumnsModal" tabindex="-1" aria-labelledby="deleteColumnsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteColumnsModalLabel">Supprimer des colonnes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="columns-checkboxes">
+                    <!-- Les colonnes seront ajoutées ici par le JS -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button id="confirm-delete-columns-btn" type="button" class="btn btn-danger">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modale pour la suppression des lignes -->
+<div class="modal fade" id="deleteRowsModal" tabindex="-1" aria-labelledby="deleteRowsModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteRowsModalLabel">Supprimer des lignes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="delete-rows-form">
+                    <div class="form-group">
+                        <label for="start-line">Ligne de début :</label>
+                        <input type="number" id="start-line" class="form-control" placeholder="Entrez la ligne de début" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label for="end-line">Ligne de fin :</label>
+                        <input type="number" id="end-line" class="form-control" placeholder="Entrez la ligne de fin" min="0">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button id="confirm-delete-rows-btn" type="button" class="btn btn-danger">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal pour gérer les valeurs manquantes -->
+<div class="modal fade" id="manageMissingValuesModal" tabindex="-1" aria-labelledby="manageMissingValuesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="manageMissingValuesModalLabel">Gérer les Valeurs Manquantes</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="manage-missing-values-form">
+                    <p>Action à réaliser :</p>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="missing-values-action" id="delete-rows" value="delete-rows">
+                        <label class="form-check-label" for="delete-rows">Supprimer les lignes avec valeurs manquantes</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="missing-values-action" id="delete-columns" value="delete-columns">
+                        <label class="form-check-label" for="delete-columns">Supprimer les colonnes avec valeurs manquantes</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-default" value="fill-default">
+                        <label class="form-check-label" for="fill-default">Remplir par une valeur par défaut</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-mean" value="fill-mean">
+                        <label class="form-check-label" for="fill-mean">Remplir par la moyenne</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-median" value="fill-median">
+                        <label class="form-check-label" for="fill-median">Remplir par la médiane</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-interpolate" value="fill-interpolate">
+                        <label class="form-check-label" for="fill-interpolate">Interpolation temporelle</label>
+                    </div>
+                    <div id="column-selection-container" class="mt-3">
+                        <label for="column-selection">Sélectionner une colonne :</label>
+                        <select id="column-selection" class="form-select">
+                            <option value="" selected disabled>-- Sélectionnez une colonne --</option>
+                            <!-- Colonnes ajoutées dynamiquement par JS -->
+                        </select>
+                    </div>
+                    <div id="default-value-container" class="mt-3" style="display: none;">
+                        <label for="default-value">Valeur par défaut :</label>
+                        <input type="text" id="default-value" class="form-control" placeholder="Entrez une valeur">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="confirm-manage-missing-values-btn">Appliquer</button>
+            </div>
+        </div>
+    </div>
+</div>

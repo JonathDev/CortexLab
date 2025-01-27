@@ -5,6 +5,11 @@ from .forms import InscriptionForm
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy
 
+from django.shortcuts import render, redirect
+from django.contrib.auth import authenticate, login
+from .forms import InscriptionForm, ConnexionForm
+from dashboard.models import Project
+
 
 def inscription_view(request):
     if request.method == 'POST':
@@ -20,9 +25,34 @@ def inscription_view(request):
 
 
 
-class ConnexionView(LoginView):
-        template_name = 'accounts/connexion.html'
-        success_url = reverse_lazy('dashboard:dashboard_home')
+
+
+def ConnexionView(request):
+    if request.method == 'POST':
+        form = ConnexionForm(request.POST)
+        if form.is_valid():
+            username = form.cleaned_data['username']
+            password = form.cleaned_data['password']
+
+            # Authentifier l'utilisateur
+            user = authenticate(request, username=username, password=password)
+            
+            if user is not None:
+                # L'utilisateur est authentifié, on le connecte et on démarre la session
+                login(request, user)  # Django gère la session automatiquement
+
+                # Optionnel : Ajouter un message de bienvenue
+                #messages.success(request, f"Bienvenue {user.username} !")
+
+                # Rediriger vers la page des projets ou vers une autre page
+                return redirect('dashboard:projets')  # Remplace par l'URL de ton choix
+            else:
+                # L'utilisateur n'est pas trouvé ou le mot de passe est incorrect
+                form.add_error(None, "Nom d'utilisateur ou mot de passe incorrect.")
+    else:
+        form = ConnexionForm()
+
+    return render(request, 'accounts/connexion.html', {'form': form})
   
 
 class DeconnexionView(LogoutView):

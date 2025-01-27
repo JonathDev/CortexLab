@@ -27,8 +27,7 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        <form id="uploadForm" method="post" enctype="multipart/form-data"  action="{% url 'dashboard:analyze_data' project.id %}" 
-                        data-url="{% url 'dashboard:analyze_data' project.id %}">
+                        <form id="uploadForm" method="post" enctype="multipart/form-data" action="{% url 'dashboard:analyze_data' project.id %}">
                             <!-- Ajoutez ceci pour vérifier -->
                             <p>URL générée : {% url 'dashboard:analyze_data' project.id %}</p>
                             {% csrf_token %}
@@ -79,41 +78,31 @@
 
 <!-- Section des datasets -->
 <h3>Datasets du Projet</h3>
-<div class="row g-3">
+<div class="row g-3" id="datasets-container">
     {% if project.datasets %}
         {% for dataset in project.datasets %}
-        <div class="col-md-4">
+        <div class="col-md-4 dataset-card-container" data-id="{{ dataset.id }}">
             <div class="card dataset-card shadow-sm h-100">
-                <!-- Nom centré -->
                 <div class="card-header text-center">
                     <h5 class="card-title mb-0">{{ dataset.name }}</h5>
                 </div>
-        
-                <!-- Partie droite : Icône, date et colonnes -->
                 <div class="card-body text-center">
                     <img src="{% static 'dashboard/icons/dataset-icon.webp' %}" alt="Dataset Icon" class="img-fluid mb-2" style="max-height: 60px;">
                     <p class="mb-1"><small>Date : {{ dataset.uploaded_at }}</small></p>
                     <p class="mb-0"><small>Colonnes : {{ dataset.columns|length }}</small></p>
                 </div>
-        
-                <!-- Footer : Toutes les actions -->
                 <div class="card-footer d-flex justify-content-between align-items-center bg-light">
-                    <!-- Action Voir -->
                     <label class="form-check-label d-flex align-items-center mb-0">
                         <input 
                             type="checkbox" 
                             class="form-check-input dataset-checkbox me-2" 
                             data-id="{{ dataset.id }}"
                             title="Sélectionner pour analyse">
-                        <i class="bi bi-eye text-primary" title="Sélectionner pour analyse" style="font-size: 1.2rem;"></i>
+                        <i class="bi bi-eye text-primary" style="font-size: 1.2rem;"></i>
                     </label>
-        
-                    <!-- Action Analyser -->
                     <button class="btn btn-link text-primary p-0" title="Analyser">
                         <i class="bi bi-bar-chart-line" style="font-size: 1.4rem;"></i>
                     </button>
-        
-                    <!-- Action Supprimer -->
                     <form class="delete-dataset-form mb-0" method="POST" action="{% url 'dashboard:delete_dataset' project.id %}">
                         {% csrf_token %}
                         <input type="hidden" name="dataset_id" value="{{ dataset.id }}">
@@ -124,8 +113,6 @@
                 </div>
             </div>
         </div>
-        
-        
         {% endfor %}
     {% else %}
         <p class="text-muted">Aucun dataset disponible.</p>

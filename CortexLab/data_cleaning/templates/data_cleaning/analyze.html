@@ -4,18 +4,18 @@
 {% block content %}
 <div class="container-fluid d-flex">
     <!-- Sidebar Gauche -->
-    <div class="sidebar bg-light p-3" style="width: 250px; height: 100vh; overflow-y: auto;">
-        <h5 class="text-center">Datasets sélectionnés</h5>
-        <ul class="list-group" id="dataset-list">
+    <div id="selected-datasets-container" class="list-group">
+        {% if datasets %}
             {% for dataset in datasets %}
-            <li class="list-group-item d-flex justify-content-between align-items-center dataset-item" data-id="{{ dataset.id }}">
-                <span>{{ dataset.name }}</span>
-                <button class="btn btn-sm btn-outline-primary select-dataset-btn" title="Afficher">
-                    <i class="bi bi-eye"></i>
-                </button>
-            </li>
+                <div class="list-group-item">
+                    <strong>{{ dataset.name }}</strong><br>
+                    <small>Colonnes : {{ dataset.columns|length }}</small><br>
+                    <small>Uploadé le : {{ dataset.uploaded_at }}</small>
+                </div>
             {% endfor %}
-        </ul>
+        {% else %}
+            <p class="text-muted">Aucun dataset sélectionné.</p>
+        {% endif %}
     </div>
 
     <!-- Conteneur Principal -->
@@ -27,6 +27,7 @@
             <div class="card-body d-flex">
                 <!-- Contenu Principal à Gauche -->
                 <div class="flex-grow-1 me-4">
+                    <!-- Sélection du Dataset -->
                     <div class="mb-3">
                         <label for="dataset-selector" class="form-label">Choisir un Dataset :</label>
                         <select id="dataset-selector" class="form-select">
@@ -36,22 +37,53 @@
                             {% endfor %}
                         </select>
                     </div>
-        
-                    <!-- Section de Visualisation -->
+                    
                     <div id="dataset-visualization" class="border p-3 rounded bg-light">
                         <h6>Visualisation des Données</h6>
-                        <p class="text-muted">Sélectionnez un dataset pour afficher les données ici.</p>
-                    </div>                                     
-        
-                    <!-- Section Actions Entreprises -->
-                    <div id="action-log" class="border mt-3 p-3 rounded bg-light">
-                        <h6>Actions Entreprises</h6>
-                        <ul class="list-unstyled" id="action-log-list">
-                            <li class="text-muted">Aucune action entreprise pour l'instant.</li>
-                        </ul>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr id="dataset-headers">
+                                    <!-- Colonnes ajoutées dynamiquement -->
+                                </tr>
+                            </thead>
+                            <tbody id="dataset-rows">
+                                <!-- Lignes ajoutées dynamiquement -->
+                            </tbody>
+                        </table>
+                        <div id="pagination-controls" class="d-flex justify-content-center mt-3">
+                            <!-- Contrôles de pagination ajoutés dynamiquement -->
+                        </div>
+                    </div>
+                    
+                    <!-- Informations du Dataset et Actions -->
+                    <div class="d-flex mt-4">
+                        <!-- Section Informations -->
+                        <div class="card w-50 me-2">
+                            <div class="card-header bg-info text-white">
+                                <h6>Informations du Dataset</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Nom du dataset :</strong> <span id="dataset-name">N/A</span></p>
+                                <p><strong>Nombre de lignes :</strong> <span id="dataset-rows-count">0</span></p>
+                                <p><strong>Colonnes :</strong> <span id="dataset-columns">N/A</span></p>
+                                <p><strong>Valeurs manquantes :</strong> <span id="missing-values">N/A</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Section Actions Entreprises -->
+                        <div class="card w-50">
+                            <div class="card-header bg-secondary text-white">
+                                <h6>Actions Entreprises</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group" id="action-log">
+                                    <li class="list-group-item text-muted">Aucune action entreprise pour l'instant.</li>
+                                </ul>
+                            </div>
+                        </div>
                     </div>
                 </div>
-        
+
                 <!-- Console des Actions à Droite -->
                 <div class="d-flex flex-column align-items-start" style="width: 250px;">
                     <button class="btn btn-danger w-100 mb-3" id="delete-rows-btn">
@@ -75,162 +107,27 @@
                     </button>
                 </div>
             </div>
-        
-<!-- Footer pour les autres actions -->
-<div class="card-footer d-flex justify-content-between">
-    <button class="btn btn-outline-primary" id="view-dataset-btn" data-bs-toggle="modal" data-bs-target="#datasetModal">
-        <i class="bi bi-table"></i> Visualiser
-    </button>
 
-    <button class="btn btn-outline-info" id="analyze-dataset-btn">
-        <i class="bi bi-graph-up"></i> Analyser
-    </button>
-
-    <button class="btn btn-outline-success" id="save-dataset-btn">
-        <i class="bi bi-save"></i> Sauvegarder
-    </button>
-</div>
-
-<!-- Modale pour la visualisation complète -->
-<div class="modal fade" id="datasetModal" tabindex="-1" aria-labelledby="datasetModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="datasetModalLabel">Visualisation complète du dataset</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <!-- Contenu du dataset -->
-                <div id="full-dataset-container" class="table-responsive">
-                    <p class="text-muted text-center">Chargement des données...</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            <!-- Footer -->
+            <div class="card-footer d-flex justify-content-between">
+                <button class="btn btn-outline-primary" id="view-dataset-btn" data-bs-toggle="modal" data-bs-target="#datasetModal">
+                    <i class="bi bi-table"></i> Visualiser
+                </button>
+                <button class="btn btn-outline-info" id="analyze-dataset-btn">
+                    <i class="bi bi-graph-up"></i> Analyser
+                </button>
+                <button class="btn btn-outline-success" id="save-dataset-btn">
+                    <i class="bi bi-save"></i> Sauvegarder
+                </button>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Modale pour la suppression des colonnes -->
-<div class="modal fade" id="deleteColumnsModal" tabindex="-1" aria-labelledby="deleteColumnsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteColumnsModalLabel">Supprimer des colonnes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <div id="columns-checkboxes">
-                    <!-- Les colonnes seront ajoutées ici par le JS -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button id="confirm-delete-columns-btn" type="button" class="btn btn-danger">Supprimer</button>
-            </div>
-        </div>
-    </div>
-</div>
-<!-- Modale pour la suppression des lignes -->
-<div class="modal fade" id="deleteRowsModal" tabindex="-1" role="dialog" aria-labelledby="deleteRowsModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteRowsModalLabel">Supprimer des lignes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="delete-rows-form">
-                    <div class="form-group">
-                        <label for="start-line">Ligne de début :</label>
-                        <input type="number" id="start-line" class="form-control" placeholder="Entrez la ligne de début" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="end-line">Ligne de fin :</label>
-                        <input type="number" id="end-line" class="form-control" placeholder="Entrez la ligne de fin" min="0">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button id="confirm-delete-rows-btn" type="button" class="btn btn-danger">Supprimer</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-
- 
-<!-- Modal pour gérer les valeurs manquantes -->
-<div class="modal fade" id="manageMissingValuesModal" tabindex="-1" aria-labelledby="manageMissingValuesModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="manageMissingValuesModalLabel">Gérer les Valeurs Manquantes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="manage-missing-values-form">
-                    <p>Action à réaliser :</p>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="delete-rows" value="delete-rows">
-                        <label class="form-check-label" for="delete-rows">Supprimer les lignes avec valeurs manquantes</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="delete-columns" value="delete-columns">
-                        <label class="form-check-label" for="delete-columns">Supprimer les colonnes avec valeurs manquantes</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-default" value="fill-default">
-                        <label class="form-check-label" for="fill-default">Remplir par une valeur par défaut</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-mean" value="fill-mean">
-                        <label class="form-check-label" for="fill-mean">Remplir par la moyenne</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-median" value="fill-median">
-                        <label class="form-check-label" for="fill-median">Remplir par la médiane</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-interpolate" value="fill-interpolate">
-                        <label class="form-check-label" for="fill-interpolate">Interpolation temporelle</label>
-                    </div>
-                    <div id="column-selection-container" class="mt-3">
-                        <label for="column-selection">Sélectionner une colonne :</label>
-                        <select id="column-selection" class="form-select">
-                            <option value="" selected disabled>-- Sélectionnez une colonne --</option>
-                            <!-- Colonnes ajoutées dynamiquement par JS -->
-                        </select>
-                    </div>
-                    <div id="default-value-container" class="mt-3" style="display: none;">
-                        <label for="default-value">Valeur par défaut :</label>
-                        <input type="text" id="default-value" class="form-control" placeholder="Entrez une valeur">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="confirm-manage-missing-values-btn">Appliquer</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-        </div>        
-    </div>
-</div>
-
-
-
-
-
+<!-- Modales -->
+{% include 'data_cleaning/modals.html' %}
 
 <!-- Inclusion du CSS et JS -->
 <link rel="stylesheet" href="{% static 'data_cleaning/css/data_cleaning.css' %}">
 <script src="{% static 'data_cleaning/js/data_cleaning.js' %}" defer></script>
 {% endblock %}
-
