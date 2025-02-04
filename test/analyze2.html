@@ -1,0 +1,174 @@
+{% extends 'main/dashboard_home.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container-fluid d-flex">
+    <!-- Sidebar Gauche -->
+    <div class="sidebar">
+        <h3>Datasets sélectionnés</h3>
+        {% if datasets %}
+            <ul class="list-group">
+                {% for dataset in datasets %}
+                    <li class="list-group-item">
+                        <strong>{{ dataset.name }}</strong><br>
+                        <small>Colonnes : {{ dataset.columns|length }}</small><br>
+                        <small>Uploadé le : {{ dataset.uploaded_at }}</small>
+                    </li>
+                {% endfor %}
+            </ul>
+        {% else %}
+            <p class="text-muted">Aucun dataset sélectionné.</p>
+        {% endif %}
+    </div>
+
+    <!-- Conteneur Principal -->
+    <div class="flex-grow-1">
+        <div class="card mb-4 w-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Analyse et Nettoyage des Datasets</h5>
+            </div>
+            <div class="card-body d-flex">
+                <!-- Contenu Principal à Gauche -->
+                <div class="flex-grow-1 me-4">
+                    <!-- Sélection du Dataset -->
+                    <div class="mb-3">
+                        <label for="dataset-selector" class="form-label">Choisir un Dataset :</label>
+                        <select id="dataset-selector" class="form-select">
+                            <option value="" disabled selected>-- Sélectionnez un Dataset --</option>
+                            {% for dataset in datasets %}
+                            <option value="{{ dataset.id }}">{{ dataset.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Section de Visualisation -->
+                    <div id="dataset-visualization" class="border p-3 rounded bg-light">
+                        <h6>Visualisation des Données</h6>
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr id="dataset-headers">
+                                    <!-- Colonnes ajoutées dynamiquement -->
+                                </tr>
+                            </thead>
+                            <tbody id="dataset-rows">
+                                <!-- Lignes ajoutées dynamiquement -->
+                            </tbody>
+                        </table>
+                        <div id="pagination-controls" class="d-flex justify-content-center mt-3">
+                            <!-- Contrôles de pagination ajoutés dynamiquement -->
+                        </div>
+                    </div>
+                    
+                    <!-- Informations du Dataset et Actions -->
+                    <div class="d-flex mt-4">
+                        <!-- Section Informations -->
+                        <div class="card w-50 me-2">
+                            <div class="card-header bg-info text-white">
+                                <h6>Informations du Dataset</h6>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Nom du dataset :</strong> <span id="dataset-name">N/A</span></p>
+                                <p><strong>Nombre de lignes :</strong> <span id="dataset-rows-count">0</span></p>
+                                <p><strong>Colonnes :</strong> <span id="dataset-columns">N/A</span></p>
+                                <p><strong>Valeurs manquantes :</strong> <span id="missing-values">N/A</span></p>
+                            </div>
+                        </div>
+
+                        <!-- Section Actions Entreprises -->
+                        <div class="card w-50">
+                            <div class="card-header bg-secondary text-white">
+                                <h6>Actions Entreprises</h6>
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group" id="action-log">
+                                    <li class="list-group-item text-muted">Aucune action entreprise pour l'instant.</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Console des Actions à Droite -->
+                <div class="d-flex flex-column align-items-start" style="width: 250px;">
+                    <button class="btn btn-danger w-100 mb-3" id="delete-rows-btn">
+                        <i class="bi bi-trash"></i> Supprimer Lignes
+                    </button>
+                    <button class="btn btn-warning w-100 mb-3" id="delete-columns-btn">
+                        <i class="bi bi-x-square"></i> Supprimer Colonnes
+                    </button>
+                    <button class="btn btn-info w-100 mb-3" id="manage-missing-values-btn">
+                        <i class="bi bi-exclamation-triangle"></i> Gérer Valeurs Manquantes
+                    </button>
+                    
+                    <button class="btn btn-info w-100 mb-3" id="filter-data-btn">
+                        <i class="bi bi-funnel"></i> Filtrer Données
+                    </button>
+                    <button class="btn btn-success w-100 mb-3" id="change-type-btn">
+                        <i class="bi bi-pencil-square"></i> Changer Type
+                    </button>
+                    <button class="btn btn-secondary w-100" id="reset-btn">
+                        <i class="bi bi-arrow-counterclockwise"></i> Réinitialiser
+                    </button>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="card-footer d-flex justify-content-between">
+                <button class="btn btn-outline-primary" id="view-dataset-btn" data-bs-toggle="modal" data-bs-target="#datasetModal">
+                    <i class="bi bi-table"></i> Visualiser
+                </button>
+                <button class="btn btn-outline-info" id="analyze-dataset-btn">
+                    <i class="bi bi-graph-up"></i> Analyser
+                </button>
+                <button class="btn btn-outline-success" id="save-dataset-btn">
+                    <i class="bi bi-save"></i> Sauvegarder
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modales -->
+{% include 'data_cleaning/modals.html' %}
+
+<!-- Inclusion du CSS et JS -->
+<link rel="stylesheet" href="{% static 'data_cleaning/css/data_cleaning.css' %}">
+<script src="{% static 'data_cleaning/js/data_cleaning.js' %}" defer></script>
+{% endblock %}
+
+
+`
+            <div class="col-md-4 dataset-card-container" data-id="${dataset.id}">
+            <div class="card dataset-card shadow-sm h-100">
+                <div class="card-header text-center">
+                    <h5 class="card-title mb-0">${dataset.name}</h5>
+                </div>
+                <div class="card-body text-center">
+                    <img src="/static/dashboard/icons/dataset-icon.webp" alt="Dataset Icon" class="img-fluid mb-2" style="max-height: 60px;">
+                    <p class="mb-1"><small>Date : ${dataset.uploaded_at || "Non disponible"}</small></p>
+                    <p class="mb-0"><small>Colonnes : ${dataset.columns.length || 0}</small></p>
+                </div>
+                <div class="card-footer d-flex justify-content-between align-items-center bg-light">
+                    <!-- Case à cocher -->
+                    <label class="form-check-label d-flex align-items-center mb-0">
+                        <input 
+                            type="checkbox" 
+                            class="form-check-input dataset-checkbox me-2" 
+                            data-id="${dataset.id}"
+                            title="Sélectionner pour analyse">
+                        <i class="bi bi-eye text-primary" style="font-size: 1.2rem;"></i>
+                    </label>
+                    <!-- Bouton Analyser -->
+                    <button class="btn btn-link text-primary p-0" title="Analyser">
+                        <i class="bi bi-bar-chart-line" style="font-size: 1.4rem;"></i>
+                    </button>
+                    <!-- Bouton Supprimer -->
+                    <form class="delete-dataset-form mb-0" method="POST" action="/dashboard/projets/${document.getElementById('project-container').dataset.projectId}/delete_dataset/">
+                        <input type="hidden" name="dataset_id" value="${dataset.id}">
+                        <button type="submit" class="btn btn-danger btn-sm" title="Supprimer">
+                            <i class="bi bi-trash" style="font-size: 1.2rem;"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>`;
