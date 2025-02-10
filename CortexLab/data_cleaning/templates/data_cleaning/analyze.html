@@ -20,6 +20,7 @@
 
     <!-- Conteneur Principal -->
     <div class="flex-grow-1">
+
         <div class="card mb-4 w-100">
             <div class="card-header bg-primary text-white">
                 <h5 class="mb-0">Analyse et Nettoyage des Datasets</h5>
@@ -38,36 +39,41 @@
                         </select>
                     </div>
                     
-                    <div id="dataset-visualization" class="border p-3 rounded bg-light">
-                        <h6>Visualisation des Données</h6>
-                        <table class="table table-bordered">
-                            <thead>
-                                <tr id="dataset-headers">
-                                    <!-- Colonnes ajoutées dynamiquement -->
-                                </tr>
-                            </thead>
-                            <tbody id="dataset-rows">
-                                <!-- Lignes ajoutées dynamiquement -->
-                            </tbody>
-                        </table>
-                        <div id="pagination-controls" class="d-flex justify-content-center mt-3">
-                            <!-- Contrôles de pagination ajoutés dynamiquement -->
-                        </div>
-                    </div>
+                    <h6>Visualisation des Données</h6>
+<div id="dataset-visualization" class="border p-3 rounded bg-light">
+    <!-- Conteneur pour permettre le défilement horizontal -->
+    <div class="table-responsive">
+        <table class="table table-bordered">
+            <thead>
+                <tr id="dataset-headers">
+                    <!-- Colonnes ajoutées dynamiquement -->
+                </tr>
+            </thead>
+            <tbody id="dataset-rows">
+                <!-- Lignes ajoutées dynamiquement -->
+            </tbody>
+        </table>
+    </div>
+    <div id="pagination-controls" class="d-flex justify-content-center mt-3">
+        <!-- Contrôles de pagination ajoutés dynamiquement -->
+    </div>
+</div>
                     
                     <!-- Informations du Dataset et Actions -->
                     <div class="d-flex mt-4">
                         <!-- Section Informations -->
-                        <div class="card w-50 me-2">
-                            <div class="card-header bg-info text-white">
-                                <h6>Informations du Dataset</h6>
-                            </div>
-                            <div class="card-body">
-                                <p><strong>Nom du dataset :</strong> <span id="dataset-name">N/A</span></p>
-                                <p><strong>Nombre de lignes :</strong> <span id="dataset-rows-count">0</span></p>
-                                <p><strong>Colonnes :</strong> <span id="dataset-columns">N/A</span></p>
-                                <p><strong>Valeurs manquantes :</strong> <span id="missing-values">N/A</span></p>
-                            </div>
+                        <!-- Section Informations -->
+    <div class="card w-50 me-2">
+        <div class="card-header bg-info text-white">
+            <h6>Informations du Dataset</h6>
+        </div>
+        <div class="card-body">
+            <p><strong>Nom du dataset :</strong> <span id="dataset-name">N/A</span></p>
+            <p><strong>Nombre de lignes :</strong> <span id="dataset-rows-count">0</span></p>
+            <p><strong>Colonnes :</strong> <span id="dataset-columns">N/A</span></p>
+            <p><strong>Valeurs manquantes :</strong> <span id="missing-values">N/A</span></p>
+        </div>
+    </div>
                         </div>
 
                         <!-- Section Actions Entreprises -->
@@ -124,7 +130,7 @@
     </div>
 </div>
 
-<!-- Modales -->
+<!-- Inclure les modales -->
 {% include 'data_cleaning/modals.html' %}
 
 <!-- Inclusion du CSS et JS -->

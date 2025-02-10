@@ -53,10 +53,24 @@
 }
 
 #dataset-visualization {
-    background-color: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 5px;
+    max-height: 550px; /* Limite la hauteur globale pour le défilement */
+    overflow-y: auto; /* Active le défilement vertical si nécessaire */
+    border: 1px solid #ddd; /* Bordure légère */
     padding: 10px;
+    background-color: #f8f9fa; /* Fond clair */
+    border-radius: 5px;
+}
+
+#dataset-visualization .table-responsive {
+    max-width: 100%; /* Assurez-vous que le tableau ne dépasse pas la largeur */
+    overflow-x: auto; /* Active le défilement horizontal */
+    white-space: nowrap; /* Empêche le retour à la ligne des colonnes */
+}
+
+.table-bordered th,
+.table-bordered td {
+    min-width: 100px; /* Largeur minimale pour chaque colonne */
+    text-align: center; /* Centre le texte */
 }
 
 #action-log {
@@ -148,4 +162,71 @@
 .modal.show .modal-dialog {
     transform: translateY(0);
     opacity: 1;
+}
+
+
+.filter-btn {
+    border: none;
+    background: transparent;
+    color: #007bff;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+.filter-btn:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+/* Ajustement du tableau pour permettre le défilement horizontal */
+#dataset-visualization .table-responsive {
+    overflow-x: auto;
+    white-space: nowrap;
+}
+
+/* Bouton de filtre */
+.filter-btn {
+    border: none;
+    background: transparent;
+    color: #007bff;
+    cursor: pointer;
+    margin-left: 5px;
+}
+
+.filter-btn:hover {
+    color: #0056b3;
+    text-decoration: underline;
+}
+
+/* Ajustement de la modale */
+.filter-options {
+    display: none;
+}
+.modal-header {
+    background-color: #333;
+    color: #fff;
+}
+
+.modal-footer {
+    background-color: #333;
+    color: #fff;
+}
+
+.modal-body section {
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+#filter-unique-values {
+    list-style-type: none;
+    padding: 0;
+}
+
+#filter-unique-values li {
+    margin: 5px 0;
+}
+
+button {
+    border-radius: 5px;
+    font-weight: bold;
 }

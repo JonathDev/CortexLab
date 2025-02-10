@@ -1,124 +1,90 @@
-<!-- Modale pour la visualisation complète -->
-<div class="modal fade" id="datasetModal" tabindex="-1" aria-labelledby="datasetModalLabel" aria-hidden="true">
+<!--Modal pour filtrage-->
+<div class="modal fade" id="filterModal" tabindex="-1" aria-labelledby="filterModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="datasetModalLabel">Visualisation complète du dataset</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <!-- En-tête de la modale -->
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">
+                    Nom de la colonne : <span id="filter-column-name"></span>
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
-            <div class="modal-body">
-                <!-- Contenu du dataset -->
-                <div id="full-dataset-container" class="table-responsive">
-                    <p class="text-muted text-center">Chargement des données...</p>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Modale pour la suppression des colonnes -->
-<div class="modal fade" id="deleteColumnsModal" tabindex="-1" aria-labelledby="deleteColumnsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteColumnsModalLabel">Supprimer des colonnes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
+            <!-- Corps de la modale -->
             <div class="modal-body">
-                <div id="columns-checkboxes">
-                    <!-- Les colonnes seront ajoutées ici par le JS -->
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button id="confirm-delete-columns-btn" type="button" class="btn btn-danger">Supprimer</button>
-            </div>
-        </div>
-    </div>
-</div>
+                <!-- Section Informations -->
+                <section class="mb-4 p-3" style="background-color: #f1f1f1; border-radius: 5px;">
+                    <h6>Informations</h6>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>Type de colonne :</strong> <span id="filter-column-type"></span></p>
+                            <p><strong>Valeurs uniques :</strong></p>
+                            <div>
+                                <h6>Valeurs uniques :</h6>
+                                <ul id="filter-unique-values">
+                                    <!-- Les 4 plus grandes valeurs uniques seront insérées ici -->
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-md-6 text-end">
+                            <p><strong>Valeurs nulles :</strong> <span id="filter-null-count"></span></p>
+                            <button class="btn btn-secondary btn-sm" id="view-all-unique-values">
+                                Voir toutes les valeurs uniques
+                            </button>
+                        </div>
+                    </div>
+                </section>
 
-<!-- Modale pour la suppression des lignes -->
-<div class="modal fade" id="deleteRowsModal" tabindex="-1" aria-labelledby="deleteRowsModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="deleteRowsModalLabel">Supprimer des lignes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="delete-rows-form">
-                    <div class="form-group">
-                        <label for="start-line">Ligne de début :</label>
-                        <input type="number" id="start-line" class="form-control" placeholder="Entrez la ligne de début" min="0">
-                    </div>
-                    <div class="form-group">
-                        <label for="end-line">Ligne de fin :</label>
-                        <input type="number" id="end-line" class="form-control" placeholder="Entrez la ligne de fin" min="0">
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button id="confirm-delete-rows-btn" type="button" class="btn btn-danger">Supprimer</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Modal pour gérer les valeurs manquantes -->
-<div class="modal fade" id="manageMissingValuesModal" tabindex="-1" aria-labelledby="manageMissingValuesModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="manageMissingValuesModalLabel">Gérer les Valeurs Manquantes</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="manage-missing-values-form">
-                    <p>Action à réaliser :</p>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="delete-rows" value="delete-rows">
-                        <label class="form-check-label" for="delete-rows">Supprimer les lignes avec valeurs manquantes</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="delete-columns" value="delete-columns">
-                        <label class="form-check-label" for="delete-columns">Supprimer les colonnes avec valeurs manquantes</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-default" value="fill-default">
-                        <label class="form-check-label" for="fill-default">Remplir par une valeur par défaut</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-mean" value="fill-mean">
-                        <label class="form-check-label" for="fill-mean">Remplir par la moyenne</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-median" value="fill-median">
-                        <label class="form-check-label" for="fill-median">Remplir par la médiane</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input" type="radio" name="missing-values-action" id="fill-interpolate" value="fill-interpolate">
-                        <label class="form-check-label" for="fill-interpolate">Interpolation temporelle</label>
-                    </div>
-                    <div id="column-selection-container" class="mt-3">
-                        <label for="column-selection">Sélectionner une colonne :</label>
-                        <select id="column-selection" class="form-select">
-                            <option value="" selected disabled>-- Sélectionnez une colonne --</option>
-                            <!-- Colonnes ajoutées dynamiquement par JS -->
+                <!-- Section Options de Filtrage -->
+                <section class="mb-4 p-3" style="background-color: #f9f9f9; border-radius: 5px;">
+                    <h6>Options de Filtrage</h6>
+                    <div id="numeric-filter-options" style="display: none;">
+                        <label for="numeric-filter-type">Condition :</label>
+                        <select id="numeric-filter-type" class="form-select mb-2">
+                            <option value="<">Inférieur à</option>
+                            <option value="<=">Inférieur ou égal</option>
+                            <option value=">">Supérieur à</option>
+                            <option value=">=">Supérieur ou égal</option>
+                            <option value="==">Égal à</option>
                         </select>
+                        <label for="numeric-filter-value">Valeur :</label>
+                        <input type="number" id="numeric-filter-value" class="form-control">
                     </div>
-                    <div id="default-value-container" class="mt-3" style="display: none;">
-                        <label for="default-value">Valeur par défaut :</label>
-                        <input type="text" id="default-value" class="form-control" placeholder="Entrez une valeur">
+
+                    <div id="text-filter-options" style="display: none;">
+                        <label for="text-filter-value">Valeur à rechercher :</label>
+                        <input type="text" id="text-filter-value" class="form-control">
                     </div>
-                </form>
+
+                    <div id="date-filter-options" style="display: none;">
+                        <label for="date-filter-type">Condition :</label>
+                        <select id="date-filter-type" class="form-select mb-2">
+                            <option value="before">Avant</option>
+                            <option value="after">Après</option>
+                        </select>
+                        <label for="date-filter-value">Date :</label>
+                        <input type="date" id="date-filter-value" class="form-control">
+                    </div>
+                </section>
+
+                <!-- Section Actions -->
+                <section class="p-3" style="background-color: #ececec; border-radius: 5px;">
+                    <h6>Actions</h6>
+                    <div class="d-flex justify-content-between mb-2">
+                        <button class="btn btn-primary btn-sm">Afficher les valeurs filtrées</button>
+                        <button class="btn btn-danger btn-sm">Supprimer les valeurs filtrées</button>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <button class="btn btn-warning btn-sm">Remplacer les valeurs filtrées</button>
+                        <button class="btn btn-secondary btn-sm">Supprimer la colonne</button>
+                    </div>
+                </section>
             </div>
-            <div class="modal-footer">
+
+            <!-- Pied de page de la modale -->
+            <div class="modal-footer bg-dark text-white">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="confirm-manage-missing-values-btn">Appliquer</button>
+                <button type="button" class="btn btn-primary" id="apply-filter-btn">Appliquer</button>
             </div>
         </div>
     </div>
