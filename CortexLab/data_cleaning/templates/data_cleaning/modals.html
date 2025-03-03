@@ -18,19 +18,19 @@
                     <div class="row">
                         <div class="col-md-6">
                             <p><strong>Type de colonne :</strong> <span id="filter-column-type"></span></p>
+    
                             <p><strong>Valeurs uniques :</strong></p>
-                            <div>
-                                <h6>Valeurs uniques :</h6>
-                                <ul id="filter-unique-values">
-                                    <!-- Les 4 plus grandes valeurs uniques seront insérées ici -->
-                                </ul>
-                            </div>
+                            <ul id="filter-unique-values" class="list-group">
+                                <!-- Les valeurs uniques s'afficheront ici -->
+                            </ul>
+
                         </div>
                         <div class="col-md-6 text-end">
                             <p><strong>Valeurs nulles :</strong> <span id="filter-null-count"></span></p>
-                            <button class="btn btn-secondary btn-sm" id="view-all-unique-values">
+                            <button id="view-all-unique-values" class="btn btn-secondary">
                                 Voir toutes les valeurs uniques
                             </button>
+                            
                         </div>
                     </div>
                 </section>
@@ -46,6 +46,7 @@
                             <option value=">">Supérieur à</option>
                             <option value=">=">Supérieur ou égal</option>
                             <option value="==">Égal à</option>
+                            <option value="==">Valeurs manquantes</option>
                         </select>
                         <label for="numeric-filter-value">Valeur :</label>
                         <input type="number" id="numeric-filter-value" class="form-control">
@@ -53,8 +54,17 @@
 
                     <div id="text-filter-options" style="display: none;">
                         <label for="text-filter-value">Valeur à rechercher :</label>
-                        <input type="text" id="text-filter-value" class="form-control">
+                        <div class="input-group">
+                            <input type="text" id="text-filter-value" class="form-control">
+                            <button class="btn btn-secondary dropdown-toggle" type="button" id="text-filter-dropdown-btn" data-bs-toggle="dropdown" aria-expanded="false">
+                                ▼
+                            </button>
+                            <ul class="dropdown-menu" id="text-filter-dropdown">
+                                <!-- Valeurs uniques seront insérées ici dynamiquement -->
+                            </ul>
+                        </div>
                     </div>
+                    
 
                     <div id="date-filter-options" style="display: none;">
                         <label for="date-filter-type">Condition :</label>
@@ -68,23 +78,90 @@
                 </section>
 
                 <!-- Section Actions -->
-                <section class="p-3" style="background-color: #ececec; border-radius: 5px;">
-                    <h6>Actions</h6>
-                    <div class="d-flex justify-content-between mb-2">
-                        <button class="btn btn-primary btn-sm">Afficher les valeurs filtrées</button>
-                        <button class="btn btn-danger btn-sm">Supprimer les valeurs filtrées</button>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <button class="btn btn-warning btn-sm">Remplacer les valeurs filtrées</button>
-                        <button class="btn btn-secondary btn-sm">Supprimer la colonne</button>
-                    </div>
-                </section>
-            </div>
+              <!-- Section Actions -->
+<section class="p-3" style="background-color: #ececec; border-radius: 5px;">
+    <h6>Actions</h6>
+    <div class="d-flex justify-content-between mb-2">
+        <button id="show-filtered-values" class="btn btn-primary btn-sm">
+            Afficher les valeurs filtrées
+        </button>
+        <button id="delete-filtered-values-btn" class="btn btn-danger btn-sm">
+            Supprimer les valeurs filtrées
+        </button>
+        
+    </div>
+    <div class="d-flex justify-content-between mb-2">
+        <button id="replace-values-btn" class="btn btn-warning">Remplacer les valeurs filtrées</button>
+        <button class="btn btn-secondary btn-sm">Supprimer la colonne</button>
+    </div>
+</section>
+
+<!-- Conteneur pour afficher les résultats filtrés -->
+<div id="filtered-values-container" class="mt-3"></div>
 
             <!-- Pied de page de la modale -->
             <div class="modal-footer bg-dark text-white">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
                 <button type="button" class="btn btn-primary" id="apply-filter-btn">Appliquer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Modale pour afficher toutes les valeurs uniques -->
+<div class="modal fade" id="uniqueValuesModal" tabindex="-1" aria-labelledby="uniqueValuesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Valeurs uniques de <span id="unique-values-column-name"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-bordered">
+                        <thead>
+                            <tr>
+                                <th>Valeur</th>
+                                <th>Pourcentage</th>
+                            </tr>
+                        </thead>
+                        <tbody id="unique-values-table-body">
+                            <!-- Les valeurs uniques seront insérées ici dynamiquement -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- 📌 Modale pour remplacer les valeurs filtrées -->
+<div class="modal fade" id="replaceValuesModal" tabindex="-1" aria-labelledby="replaceValuesModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="replaceValuesModalLabel">Remplacer les valeurs filtrées</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+            </div>
+            <div class="modal-body">
+                <p>Vous allez remplacer la valeur suivante :</p>
+                <p><strong>Colonne :</strong> <span id="replace-column-name"></span></p>
+                <p><strong>Valeur actuelle :</strong> <span id="replace-old-value"></span></p>
+                <div class="mb-3">
+                    <label for="replace-new-value" class="form-label">Nouvelle valeur :</label>
+                    <input type="text" class="form-control" id="replace-new-value" placeholder="Entrez la nouvelle valeur">
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                <button type="button" class="btn btn-primary" id="apply-replace-btn">Appliquer</button>
             </div>
         </div>
     </div>
