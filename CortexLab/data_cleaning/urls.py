@@ -11,6 +11,10 @@ urlpatterns = [
     path("get_column_type/<str:dataset_id>/", views.get_column_type_view, name="get_column_type"),
     path('get_unique_values/<str:dataset_id>/', views.get_unique_values, name='get_unique_values'),
     path("get_filtered_values/<str:dataset_id>/", views.get_filtered_values, name="get_filtered_values"),
+    path("replace_filtered_values/<str:dataset_id>/", views.replace_filtered_values, name="replace_filtered_values"),
+    path('delete_filtered_rows/<str:dataset_id>/', views.delete_filtered_rows, name='delete_filtered_rows'),
+    path('delete_column/<str:dataset_id>/', views.delete_column, name='delete_column'),
+    path('undo_last_action/<str:dataset_id>/', views.undo_last_action, name='undo_last_action'),
 
 
     
@@ -21,6 +25,6 @@ urlpatterns = [
     #path('get_unique_values/<str:dataset_id>/', views.get_unique_values, name='get_unique_values'),
     #path("replace_values/<str:dataset_id>/", views.replace_values, name="replace_values"),
     #path("get_filtered_values/<str:dataset_id>/", views.get_filtered_values, name="get_filtered_values"),
-    #path("delete_filtered_values/<str:dataset_id>/", views.delete_filtered_values, name="delete_filtered_values"),
+    #
 
 ]

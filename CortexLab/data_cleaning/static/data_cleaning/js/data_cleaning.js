@@ -13,6 +13,143 @@ function getCSRFToken() {
     return null;
 }
 
+/**
+ * 📌 Met à jour l'affichage du dataset avec les nouvelles données.
+ * @param {Array} updatedRows - Les données mises à jour après une modification.
+ */
+function updateDatasetTable(updatedRows) {
+    console.log("📌 Mise à jour de la table avec les nouvelles données.");
+
+    const datasetRows = document.querySelector("#dataset-rows");
+    if (!datasetRows) {
+        console.error("❌ Erreur : Élément #dataset-rows introuvable !");
+        return;
+    }
+
+    datasetRows.innerHTML = ""; // 🔹 Effacer l'ancienne table
+
+    if (updatedRows.length === 0) {
+        datasetRows.innerHTML = "<tr><td colspan='100%' class='text-muted'>Aucune donnée disponible après mise à jour.</td></tr>";
+        return;
+    }
+
+    // 🔹 Ajouter chaque ligne mise à jour
+    updatedRows.forEach((row, index) => {
+        const tr = document.createElement("tr");
+
+        // Ajouter l'index
+        const tdIndex = document.createElement("td");
+        tdIndex.textContent = index + 1;
+        tr.appendChild(tdIndex);
+
+        // Ajouter les colonnes du dataset
+        Object.values(row).forEach(value => {
+            const td = document.createElement("td");
+            td.textContent = value !== null ? value : "N/A";
+            tr.appendChild(td);
+        });
+
+        datasetRows.appendChild(tr);
+    });
+
+    console.log("✅ Mise à jour du dataset affiché !");
+}
+
+/**
+ * 📌 Ajoute une action à la section "Actions Entreprises"
+ * @param {string} actionType - Type d'action effectuée (Filtrage, Remplacement, Suppression)
+ * @param {string} columnName - Nom de la colonne concernée
+ * @param {string} condition - Condition de filtrage appliquée (si applicable)
+ * @param {string} oldValue - Ancienne valeur remplacée (si applicable)
+ * @param {string} newValue - Nouvelle valeur (si applicable)
+ */
+function addActionToHistory(actionType, columnName, condition = "", oldValue = "", newValue = "") {
+    console.log(`📌 Ajout d'une action entreprise : ${actionType} sur ${columnName}`);
+
+    const actionLog = document.getElementById("action-log");
+    if (!actionLog) {
+        console.error("❌ Erreur : Conteneur d'historique des actions introuvable !");
+        return;
+    }
+
+    // 🔹 Suppression du message "Aucune action entreprise..."
+    if (actionLog.children.length === 1 && actionLog.children[0].classList.contains("text-muted")) {
+        actionLog.innerHTML = "";
+    }
+
+    // 🔹 Création d'un identifiant unique pour chaque action
+    const actionId = `action-${Date.now()}`;
+    const li = document.createElement("li");
+    li.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
+    li.id = actionId;
+
+    // 🔹 Contenu de l'action
+    let actionText = `<strong>${actionType}</strong> - Colonne : <strong>${columnName}</strong>`;
+    if (condition) {
+        actionText += ` | Condition : <strong>${condition}</strong>`;
+    }
+    if (oldValue && newValue) {
+        actionText += ` | <span class="text-muted">Remplacé</span> : <strong>${oldValue}</strong> ➝ <strong>${newValue}</strong>`;
+    }
+
+    // 🔹 Ajout du bouton "Annuler"
+    li.innerHTML = `
+        <div>${actionText}</div>
+        <button class="btn btn-sm btn-danger undo-action" data-action-id="${actionId}">
+            Annuler
+        </button>
+    `;
+
+    // 🔹 Ajout de l'événement de suppression (annulation)
+    li.querySelector(".undo-action").addEventListener("click", function () {
+        console.log(`📌 Annulation de l'action : ${actionType} sur ${columnName}`);
+        undoLastAction(actionId);
+    });
+
+    // 🔹 Ajout de l'élément dans la liste
+    actionLog.appendChild(li);
+}
+
+/**
+ * 📌 Annule une action entreprise
+ * @param {Event} event - Événement de clic sur le bouton "Annuler"
+ */
+function undoLastAction(actionElement) {
+    console.log("📌 Tentative d'annulation...");
+
+    const datasetSelector = document.querySelector("#dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+
+    if (!datasetId) {
+        console.error("❌ Erreur : Aucun dataset sélectionné !");
+        return;
+    }
+
+    console.log("📌 Élément action trouvé :", actionElement);
+
+    fetch(`/data_cleaning/undo_last_action/${datasetId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json",
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.error) {
+            console.error("❌ Erreur : ", data.error);
+            alert(`❌ Erreur : ${data.error}`);
+            return;
+        }
+
+        console.log("📌 Annulation réussie, mise à jour de la vue.");
+        loadDataset(datasetId);  // Recharge le dataset
+        actionElement.remove();   // Supprime l'élément de l'historique des actions
+    })
+    .catch(error => console.error("❌ Erreur lors de l'annulation :", error));
+}
+
+
 document.addEventListener("DOMContentLoaded", function () {
     console.log("📌 data_cleaning.js chargé !");
 
@@ -209,6 +346,8 @@ document.addEventListener("DOMContentLoaded", function () {
     
             // 🔹 Mettre à jour la table avec les nouvelles valeurs filtrées
             updateDatasetTable(data.filtered_rows);
+            addActionToHistory("Filtrage", columnName, `${filterCondition} ${filterValue}`);
+
         })
         .catch(error => console.error("❌ Erreur lors du filtrage :", error));
     });
@@ -218,276 +357,314 @@ document.addEventListener("DOMContentLoaded", function () {
 });
 
 
-/**
- * 📌 Met à jour l'affichage du dataset avec les valeurs filtrées.
- * @param {Array} filteredRows - Données filtrées reçues du backend
- */
-function updateDatasetTable(filteredRows) {
-    console.log("📌 Mise à jour de la table avec les données filtrées.");
 
-    const datasetRows = document.querySelector("#dataset-rows");
-    if (!datasetRows) {
-        console.error("❌ Erreur : Élément #dataset-rows introuvable !");
+
+document.getElementById("replace-values-btn").addEventListener("click", function () {
+    console.log("📌 Bouton 'Remplacer les valeurs filtrées' cliqué.");
+
+    const datasetSelector = document.querySelector("#dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+
+    if (!datasetId) {
+        alert("❌ Veuillez sélectionner un dataset !");
         return;
     }
 
-    datasetRows.innerHTML = ""; // 🔹 Effacer l'ancienne table
-
-    if (filteredRows.length === 0) {
-        datasetRows.innerHTML = "<tr><td colspan='100%' class='text-muted'>Aucune donnée après filtrage.</td></tr>";
+    const columnName = document.getElementById("filter-column-name")?.textContent.trim();
+    if (!columnName) {
+        alert("❌ Colonne non trouvée.");
         return;
     }
 
-    // 🔹 Ajouter chaque ligne filtrée
-    filteredRows.forEach((row, index) => {
-        const tr = document.createElement("tr");
+    let filterCondition = "";
+    let filterValue = "";
 
-        // Ajouter l'index
-        const tdIndex = document.createElement("td");
-        tdIndex.textContent = index + 1;
-        tr.appendChild(tdIndex);
+    // 🔹 Récupérer la condition et la valeur selon le type de colonne
+    const columnType = document.getElementById("filter-column-type")?.textContent.trim();
+    if (columnType === "numérique") {
+        filterCondition = document.getElementById("numeric-filter-type")?.value;
+        filterValue = document.getElementById("numeric-filter-value")?.value.trim();
+    } else if (columnType === "texte") {
+        filterValue = document.getElementById("text-filter-value")?.value.trim();
+    } else if (columnType === "date") {
+        filterCondition = document.getElementById("date-filter-type")?.value;
+        filterValue = document.getElementById("date-filter-value")?.value;
+    }
 
-        // Ajouter les colonnes du dataset
-        Object.values(row).forEach(value => {
-            const td = document.createElement("td");
-            td.textContent = value !== null ? value : "N/A";
-            tr.appendChild(td);
-        });
+    if (!filterCondition && columnType !== "texte") {
+        alert("❌ Veuillez sélectionner une condition de filtrage.");
+        return;
+    }
+    if (!filterValue) {
+        alert("❌ Veuillez saisir une valeur à filtrer.");
+        return;
+    }
 
-        datasetRows.appendChild(tr);
-    });
+    let newValue = prompt(`Entrez la nouvelle valeur pour remplacer '${filterValue}' dans la colonne '${columnName}' :`);
+    if (newValue === null || newValue.trim() === "") {
+        alert("❌ La nouvelle valeur ne peut pas être vide !");
+        return;
+    }
 
-    console.log("✅ Affichage du dataset mis à jour !");
-}
+    console.log(`📌 Envoi de la requête de remplacement pour la colonne '${columnName}', condition '${filterCondition}', valeur '${filterValue}' → '${newValue}'`);
 
-/*
+    fetch(`/data_cleaning/replace_filtered_values/${datasetId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            column: columnName,
+            condition: filterCondition,
+            old_value: filterValue,
+            new_value: newValue
+        }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("📌 Réponse du backend :", data);
+    
+        if (data.error) {
+            alert(`❌ Erreur : ${data.error}`);
+            console.error("❌ Erreur serveur :", data.error);
+            return;
+        }
+    
+        // 🔹 Mettre à jour la table avec les nouvelles valeurs remplacées
+        updateDatasetTable(data.updated_rows);
+        addActionToHistory("Remplacement", columnName, filterCondition, filterValue, newValue);
+    
+        // 🔹 Afficher un message de succès
+        alert(`✅ Valeur(s) correspondant à '${filterValue}' sous '${filterCondition}' remplacée(s) par '${newValue}' avec succès !`);
+    })
+    .catch(error => console.error("❌ Erreur lors du remplacement :", error));
+});
+
 document.addEventListener("DOMContentLoaded", function () {
     console.log("📌 data_cleaning.js chargé !");
-    
-    const datasetSelector = document.querySelector("#dataset-selector");
-    const datasetHeaders = document.querySelector("#dataset-headers");
-    const datasetRows = document.querySelector("#dataset-rows");
 
-    if (!datasetSelector || !datasetHeaders || !datasetRows) {
-        console.error("❌ Erreur : Des éléments nécessaires pour l'affichage du dataset sont introuvables.");
-        return;
+    // 📌 Vérifie si le bouton "Supprimer les valeurs filtrées" est détecté
+    const deleteFilteredValuesButton = document.getElementById("delete-filtered-values-btn");
+    if (!deleteFilteredValuesButton) {
+        console.error("❌ Erreur : Bouton 'Supprimer les valeurs filtrées' introuvable !");
+    } else {
+        console.log("✅ Bouton 'Supprimer les valeurs filtrées' détecté.");
     }
 
-    // 📌 Événement pour changer le dataset
-    datasetSelector.addEventListener("change", function () {
-        const datasetId = this.value;
-        if (!datasetId) return;
+    /**
+     * 📌 Fonction pour supprimer les lignes filtrées
+     */
+    deleteFilteredValuesButton.addEventListener("click", function () {
+        console.log("📌 [Suppression] Bouton 'Supprimer les valeurs filtrées' cliqué.");
 
-        console.log(`📌 Chargement du dataset ID : ${datasetId}`);
+        const datasetSelector = document.querySelector("#dataset-selector");
+        const datasetId = datasetSelector ? datasetSelector.value : null;
 
-        fetch(`/data_cleaning/load_dataset/${datasetId}/`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
+        if (!datasetId) {
+            alert("❌ Veuillez sélectionner un dataset !");
+            return;
+        }
 
-                console.log("📌 Dataset chargé :", data);
+        console.log("📌 datasetId utilisé pour la suppression :", datasetId);
 
-                // 📌 Mise à jour des colonnes (ajoute un index visuel, mais pas dans les données)
-                datasetHeaders.innerHTML = "<th>#</th>"; 
-                data.columns.forEach(col => {
-                    const th = document.createElement("th");
-                    th.innerHTML = `
-                        ${col}
-                        <button class="btn btn-sm btn-light filter-btn" data-column="${col}" title="Filtrer">
-                            <i class="bi bi-filter"></i>
-                        </button>
-                    `;
-                    datasetHeaders.appendChild(th);
-                });
+        const columnName = document.getElementById("filter-column-name")?.textContent.trim();
+        const columnType = document.getElementById("filter-column-type")?.textContent.trim();
+        let filterCondition = "";
+        let filterValue = "";
 
-                // 📌 Mise à jour des lignes (affiche un index visuel, mais n'affecte pas les données)
-                datasetRows.innerHTML = "";
-                data.rows.forEach((row, index) => {
-                    const tr = document.createElement("tr");
+        if (columnType === "numérique") {
+            filterCondition = document.getElementById("numeric-filter-type")?.value;
+            filterValue = document.getElementById("numeric-filter-value")?.value.trim();
+        } else if (columnType === "texte") {
+            filterValue = document.getElementById("text-filter-value")?.value.trim();
+        } else if (columnType === "date") {
+            filterCondition = document.getElementById("date-filter-type")?.value;
+            filterValue = document.getElementById("date-filter-value")?.value;
+        }
 
-                    // 📌 Ajoute un index visuel pour l'affichage uniquement
-                    const tdIndex = document.createElement("td");
-                    tdIndex.textContent = index + 1;
-                    tr.appendChild(tdIndex);
+        if (!columnName || (!filterCondition && columnType !== "texte") || !filterValue) {
+            alert("❌ Veuillez renseigner tous les champs de filtrage.");
+            return;
+        }
 
-                    data.columns.forEach(col => {
-                        const td = document.createElement("td");
-                        td.textContent = row[col] || "N/A";
-                        tr.appendChild(td);
-                    });
+        console.log(`📌 Envoi de la requête de suppression...`);
 
-                    datasetRows.appendChild(tr);
-                });
-            })
-            .catch(error => {
-                console.error("❌ Erreur lors du chargement des données :", error);
-                alert("Erreur réseau, veuillez réessayer.");
-            });
-    });
+        fetch(`/data_cleaning/delete_filtered_rows/${datasetId}/`, {
+            method: "POST",
+            headers: {
+                "X-CSRFToken": getCSRFToken(),
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ column: columnName, condition: filterCondition, value: filterValue }),
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("📌 Réponse du backend :", data);
 
-    // 📌 Gestion des clics sur les boutons de filtrage
-    document.addEventListener("click", function (event) {
-        const filterBtn = event.target.closest(".filter-btn");
-        if (filterBtn) {
-            const columnName = filterBtn.dataset.column;
-
-            // ✅ Vérifie que l'utilisateur ne tente pas de filtrer la colonne d'index
-            if (columnName === "#") {
-                alert("❌ Impossible de filtrer par numéro de ligne !");
+            if (data.error) {
+                alert(`❌ Erreur : ${data.error}`);
+                console.error("❌ Erreur serveur :", data.error);
                 return;
             }
 
-            openFilterModal(columnName);
-        }
+            // 🔹 Mettre à jour la table avec les nouvelles valeurs filtrées
+            updateDatasetTable(data.updated_rows);
+            addActionToHistory("Suppression de valeurs", columnName, `${filterCondition} ${filterValue}`);
+
+        })
+        .catch(error => console.error("❌ Erreur lors de la suppression :", error));
     });
 
-    // 📌 Fonction pour ouvrir la modale de filtrage
-    function openFilterModal(columnName) {
-        console.log("📌 Ouverture de la modale pour la colonne :", columnName);
-
-        const datasetId = datasetSelector.value;
-        if (!datasetId) {
-            alert("Veuillez sélectionner un dataset !");
-            return;
-        }
-
-        fetch(`/data_cleaning/get_column_type/${datasetId}/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken(),
-            },
-            body: JSON.stringify({ column_name: columnName }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    console.error("❌ Erreur serveur :", data.error);
-                    return;
-                }
-
-                document.getElementById("filter-column-name").textContent = columnName;
-                document.getElementById("filter-column-type").textContent = data.column_type;
-                document.getElementById("filter-null-count").textContent = data.null_count;
-
-                document.getElementById("numeric-filter-options").style.display = data.column_type === "numérique" ? "block" : "none";
-                document.getElementById("text-filter-options").style.display = data.column_type === "texte" ? "block" : "none";
-                document.getElementById("date-filter-options").style.display = data.column_type === "date" ? "block" : "none";
-
-                let filterModal = new bootstrap.Modal(document.getElementById("filterModal"));
-                filterModal.show();
-            })
-            .catch(error => console.error("❌ Erreur lors du chargement des informations :", error));
-    }
-
-    // 📌 Gestion de l'affichage des valeurs filtrées
-    document.getElementById("show-filtered-values").addEventListener("click", function () {
-        console.log("📌 Bouton 'Afficher les valeurs filtrées' cliqué.");
-
-        const datasetId = datasetSelector.value;
-        const columnName = document.getElementById("filter-column-name").textContent;
-        const filterType = document.getElementById("filter-column-type").textContent.toLowerCase();
-        let filterValue = null;
-        let filterCondition = null;
-
-        if (!datasetId) {
-            alert("Veuillez sélectionner un dataset !");
-            return;
-        }
-
-        // ✅ Empêche d'envoyer le numéro de ligne au backend
-        if (columnName === "#" || columnName === "index") {
-            alert("❌ Impossible de filtrer par numéro de ligne !");
-            return;
-        }
-
-        if (filterType === "numérique") {
-            filterCondition = document.getElementById("numeric-filter-type").value;
-            filterValue = document.getElementById("numeric-filter-value").value;
-        } else if (filterType === "texte") {
-            filterValue = document.getElementById("text-filter-value").value;
-            filterCondition = "contains";
-        } else if (filterType === "date") {
-            filterCondition = document.getElementById("date-filter-type").value;
-            filterValue = document.getElementById("date-filter-value").value;
-        }
-
-        if (!filterValue) {
-            alert("Veuillez entrer une valeur pour filtrer !");
-            return;
-        }
-
-        console.log(`📌 Envoi du filtre : ${columnName} ${filterCondition} ${filterValue}`);
-        console.log("📌 Données envoyées au backend :", {
-            column: columnName,
-            type: filterType,
-            filter: filterCondition,
-            value: filterValue
-        });
-
-        fetch(`/data_cleaning/get_filtered_values/${datasetId}/`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                "X-CSRFToken": getCSRFToken(),
-            },
-            body: JSON.stringify({
-                column: columnName,
-                type: filterType,
-                filter: filterCondition,
-                value: filterValue
-            }),
-        })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert(data.error);
-                    return;
-                }
-                console.log("📌 Résultats filtrés reçus :", data.filtered_rows);
-                updateDatasetVisualization(data.filtered_rows);
-            })
-            .catch(error => console.error("❌ Erreur lors de la récupération des valeurs filtrées :", error));
-    });
+    console.log("✅ [data_cleaning.js] Script chargé et prêt.");
 });
 
-/**
- * Met à jour l'affichage du dataset avec les données filtrées.
- * @param {Array} filteredRows - Les nouvelles lignes filtrées à afficher.
- */
-/*
-function updateDatasetVisualization(filteredRows) {
-    console.log("📌 Mise à jour de l'affichage avec les données filtrées :", filteredRows);
+document.addEventListener("click", function (event) {
+    const deleteColumnButton = event.target.closest("#delete-column-btn");
+    if (!deleteColumnButton) return;
 
-    const datasetRows = document.querySelector("#dataset-rows");
-    if (!datasetRows) {
-        console.error("❌ Erreur : L'élément #dataset-rows est introuvable.");
+    console.log("📌 Bouton 'Supprimer la colonne' cliqué.");
+
+    const datasetSelector = document.querySelector("#dataset-selector");
+    const datasetId = datasetSelector ? datasetSelector.value : null;
+    const columnName = document.getElementById("filter-column-name")?.textContent.trim();
+
+    if (!datasetId || !columnName) {
+        alert("❌ Veuillez sélectionner un dataset et une colonne !");
         return;
     }
 
-    datasetRows.innerHTML = ""; // Efface les anciennes données
+    if (!confirm(`Êtes-vous sûr de vouloir masquer temporairement la colonne '${columnName}' ?`)) {
+        return;
+    }
 
-    // Génère et ajoute les nouvelles lignes filtrées
-    filteredRows.forEach((row, index) => {
-        const tr = document.createElement("tr");
+    console.log(`📌 Masquage temporaire de la colonne '${columnName}'...`);
 
-        // Numéro de ligne affiché uniquement (mais non envoyé au backend)
-        const tdIndex = document.createElement("td");
-        tdIndex.textContent = index + 1;
-        tr.appendChild(tdIndex);
+    fetch(`/data_cleaning/delete_column/${datasetId}/`, {
+        method: "POST",
+        headers: {
+            "X-CSRFToken": getCSRFToken(),
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ column: columnName }),
+    })
+    .then(response => response.json())
+    .then(data => {
+        console.log("📌 Réponse du backend :", data);
 
-        Object.values(row).forEach(value => {
-            const td = document.createElement("td");
-            td.textContent = value || "N/A";
-            tr.appendChild(td);
-        });
+        if (data.error) {
+            alert(`❌ Erreur : ${data.error}`);
+            console.error("❌ Erreur serveur :", data.error);
+            return;
+        }
 
-        datasetRows.appendChild(tr);
+        // 🔹 Supprimer dynamiquement la colonne de l'affichage
+        removeColumnFromTable(columnName);
+        addActionToHistory("Suppression de colonne", columnName);
+
+    })
+    .catch(error => console.error("❌ Erreur lors de la suppression :", error));
+});
+
+/**
+ * 📌 Supprime une colonne de la table (à la fois le titre et les valeurs)
+ * @param {string} columnName - Le nom de la colonne à supprimer
+ */
+function removeColumnFromTable(columnName) {
+    console.log(`📌 Suppression dynamique de la colonne '${columnName}'`);
+
+    const datasetHeaders = document.querySelector("#dataset-headers");
+    const datasetRows = document.querySelectorAll("#dataset-rows tr");
+
+    // 🔹 Supprimer l'en-tête de la colonne
+    const headerCells = datasetHeaders.querySelectorAll("th");
+    let columnIndex = -1;
+
+    headerCells.forEach((th, index) => {
+        if (th.textContent.trim().includes(columnName)) {
+            columnIndex = index;
+            th.remove(); // 🔹 Supprime le titre
+        }
     });
 
-    console.log("✅ Affichage mis à jour avec succès !");
+    if (columnIndex === -1) {
+        console.warn("⚠️ Colonne non trouvée dans les en-têtes !");
+        return;
+    }
+
+    // 🔹 Supprimer les valeurs de la colonne correspondante
+    datasetRows.forEach(row => {
+        const cells = row.querySelectorAll("td");
+        if (cells[columnIndex]) {
+            cells[columnIndex].remove(); // 🔹 Supprime chaque cellule de la colonne
+        }
+    });
+
+    console.log(`✅ Colonne '${columnName}' supprimée dynamiquement !`);
 }
-*/
+
+
+const actionHistoryContainer = document.querySelector("#action-history");
+/**
+ * 📌 Ajoute une action dans la section "Actions Entreprises"
+ * @param {string} actionType - Type d'action (Filtrage, Remplacement, Suppression)
+ * @param {string} columnName - Nom de la colonne concernée
+ * @param {string} condition - Condition appliquée (si applicable)
+ * @param {string} oldValue - Ancienne valeur (si applicable)
+ * @param {string} newValue - Nouvelle valeur (si applicable)
+ */
+function addActionToLog(actionType, columnName, condition = "", oldValue = "", newValue = "") {
+    console.log(`📌 Ajout de l'action : ${actionType} sur ${columnName}`);
+
+    const actionLog = document.getElementById("action-log");
+    if (!actionLog) {
+        console.error("❌ Erreur : Conteneur des actions introuvable !");
+        return;
+    }
+
+    // 🔹 Suppression du message "Aucune action entreprise..."
+    if (actionLog.children.length === 1 && actionLog.children[0].classList.contains("text-muted")) {
+        actionLog.innerHTML = "";
+    }
+
+    // 🔹 Création de l'élément d'action
+    const actionId = `action-${Date.now()}`;
+    const li = document.createElement("li");
+    li.classList.add("list-group-item", "d-flex", "justify-content-between", "align-items-center");
+    li.id = actionId;
+
+    // 🔹 Contenu de l'action
+    let actionText = `<strong>${actionType}</strong> sur <strong>${columnName}</strong>`;
+    if (condition) {
+        actionText += ` | Condition : <strong>${condition}</strong>`;
+    }
+    if (oldValue && newValue) {
+        actionText += ` | <span class="text-muted">Remplacé</span> : <strong>${oldValue}</strong> ➝ <strong>${newValue}</strong>`;
+    }
+
+    // 🔹 Bouton "Annuler l'action"
+    li.innerHTML = `
+        <span>${actionText}</span>
+        <button class="btn btn-sm btn-danger undo-action" data-action-id="${actionId}" data-action-type="${actionType}" data-column="${columnName}">
+            Annuler
+        </button>
+    `;
+
+    // 🔹 Ajout de l'événement d'annulation
+    li.querySelector(".undo-action").addEventListener("click", function () {
+        console.log(`📌 Annulation de l'action : ${actionType} sur ${columnName}`);
+        undoLastAction(li);
+    });
+
+    // 🔹 Ajout de l'action à la liste
+    actionLog.appendChild(li);
+}
+
+// 📌 Ajout d'un écouteur global pour détecter les clics sur les boutons "Annuler"
+document.addEventListener("click", function(event) {
+    const undoButton = event.target.closest(".undo-action");
+    if (undoButton) {
+        console.log("📌 Bouton 'Annuler' cliqué !");
+        undoLastAction(event);
+    }
+});

@@ -1,3 +1,4 @@
+from io import StringIO
 from django.core.cache import cache
 from django.http import JsonResponse
 from django.shortcuts import render, get_object_or_404
@@ -6,7 +7,7 @@ from bson import ObjectId
 from dashboard.models import Project
 import json
 import pandas as pd
-from .utils import apply_filter, get_selected_datasets_from_project, get_dataframe_from_project, get_column_type, get_unique_values
+from .utils import apply_filter, get_selected_datasets_from_project, get_dataframe_from_project, get_column_type, get_unique_values, replace_values_in_dataframe
 
 from django.views.decorators.csrf import csrf_exempt
 
@@ -165,6 +166,169 @@ def get_filtered_values(request, dataset_id):
     except Exception as e:
         return JsonResponse({"error": f"Erreur de filtrage : {str(e)}"}, status=500)
     
+@login_required
+@csrf_exempt
+
+@login_required
+@csrf_exempt
+def replace_filtered_values(request, dataset_id):
+    """
+    Remplace les valeurs filtrées par une nouvelle valeur dans le dataset en tenant compte de la condition.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+    df, error = get_dataframe_from_project(request, dataset_id)
+    if error:
+        return JsonResponse({"error": error}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        column = data.get("column")
+        condition = data.get("condition")  # Condition de filtrage (<, >, etc.)
+        old_value = data.get("old_value")
+        new_value = data.get("new_value")
+
+        if column not in df.columns:
+            return JsonResponse({"error": "Colonne non trouvée."}, status=400)
+
+        # Sécuriser le nom de colonne pour Pandas (éviter les erreurs de syntaxe)
+        column_safe = f"`{column}`"  # Ajout de ` pour éviter les problèmes avec les noms
+
+        # 🔹 Vérifier si c'est une colonne numérique avec une condition
+        if df[column].dtype in ["int64", "float64"] and condition:
+            try:
+                old_value = float(old_value)
+                df.loc[df.query(f"{column_safe} {condition} @old_value").index, column] = new_value
+            except Exception as e:
+                return JsonResponse({"error": f"Erreur d'application du filtre : {str(e)}"}, status=400)
+        else:
+            # 🔹 Remplacement direct pour du texte sans condition
+            df[column] = df[column].replace(str(old_value), str(new_value))
+
+        # 🔹 Sauvegarde dans la session
+        request.session[f"modified_dataset_{dataset_id}"] = df.to_json()
+
+        updated_rows = df.to_dict(orient="records")
+        return JsonResponse({"updated_rows": updated_rows}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": f"Erreur lors du remplacement : {str(e)}"}, status=500)
+
+    
+@login_required
+@csrf_exempt
+def delete_filtered_rows(request, dataset_id):
+    """
+    Supprime les lignes correspondant aux valeurs filtrées en fonction d'une condition.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+    df, error = get_dataframe_from_project(request, dataset_id)
+    if error:
+        return JsonResponse({"error": error}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        column = data.get("column")
+        condition = data.get("condition")
+        value = data.get("value")
+
+        if column not in df.columns:
+            return JsonResponse({"error": "Colonne non trouvée."}, status=400)
+
+        # 🔹 Appliquer la condition et supprimer les lignes correspondantes
+        column_safe = f"`{column}`"  # Sécurisation du nom de colonne pour query()
+
+        if df[column].dtype in ["int64", "float64"] and condition:
+            try:
+                value = float(value)
+                df = df.query(f"not ({column_safe} {condition} @value)")  # Supprime les lignes qui correspondent
+            except Exception as e:
+                return JsonResponse({"error": f"Erreur de suppression : {str(e)}"}, status=400)
+        else:
+            # 🔹 Supprimer les lignes qui contiennent la valeur spécifiée
+            df = df[df[column].astype(str) != str(value)]
+
+        # 🔹 Sauvegarde dans la session
+        request.session[f"modified_dataset_{dataset_id}"] = df.to_json()
+
+        updated_rows = df.to_dict(orient="records")
+        return JsonResponse({"updated_rows": updated_rows}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": f"Erreur lors de la suppression : {str(e)}"}, status=500)
+    
+@login_required
+@csrf_exempt
+def delete_column(request, dataset_id):
+    """
+    Supprime temporairement une colonne du dataset en session, sans affecter la base de données.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+    df, error = get_dataframe_from_project(request, dataset_id)
+    if error:
+        return JsonResponse({"error": error}, status=400)
+
+    try:
+        data = json.loads(request.body)
+        column = data.get("column")
+
+        if column not in df.columns:
+            return JsonResponse({"error": f"Colonne '{column}' non trouvée."}, status=400)
+
+        # 🔹 Récupérer la liste des colonnes supprimées en session
+        deleted_columns = request.session.get(f"deleted_columns_{dataset_id}", [])
+        
+        if column in deleted_columns:
+            return JsonResponse({"error": f"Colonne '{column}' déjà supprimée en session."}, status=400)
+
+        # 🔹 Ajouter la colonne à la liste des colonnes supprimées
+        deleted_columns.append(column)
+        request.session[f"deleted_columns_{dataset_id}"] = deleted_columns
+
+        # 🔹 Supprimer la colonne du DataFrame en session uniquement
+        df = df.drop(columns=[column])
+
+        # 🔹 Mise à jour du dataset temporaire dans la session
+        request.session[f"modified_dataset_{dataset_id}"] = df.to_json()
+
+        updated_columns = list(df.columns)  # ✅ Récupérer les nouvelles colonnes après suppression
+        updated_rows = df.to_dict(orient="records")  # ✅ Mise à jour des lignes aussi
+
+        return JsonResponse({"updated_columns": updated_columns, "updated_rows": updated_rows}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": f"Erreur lors de la suppression temporaire : {str(e)}"}, status=500)
+
+
+@login_required
+@csrf_exempt
+def undo_last_action(request, dataset_id):
+    """
+    Annule la dernière action entreprise en restaurant les données stockées dans la session.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "Méthode non autorisée"}, status=405)
+
+    session_key = f"modified_dataset_{dataset_id}"
+
+    # Vérifie s'il existe une version précédente du dataset en session
+    if session_key not in request.session:
+        return JsonResponse({"error": "Aucune action à annuler."}, status=400)
+
+    try:
+        # 🔹 Restaurer la version précédente du dataset
+        request.session.pop(session_key, None)  # Supprime la version modifiée
+        return JsonResponse({"success": "Action annulée avec succès, rechargement nécessaire."}, status=200)
+
+    except Exception as e:
+        return JsonResponse({"error": f"Erreur lors de l'annulation : {str(e)}"}, status=500)
+
+
 
 """
 

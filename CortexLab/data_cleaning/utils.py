@@ -4,11 +4,13 @@ from bson import ObjectId
 from dashboard.models import Project
 from django.http import JsonResponse
 from io import StringIO
+import json
 
 
 def get_dataframe_from_project(request, dataset_id):
     """
     Récupère un DataFrame depuis la session si disponible, sinon depuis la base de données.
+    Prend en compte les colonnes supprimées temporairement.
     """
     session_key = f"modified_dataset_{dataset_id}"
     
@@ -17,11 +19,9 @@ def get_dataframe_from_project(request, dataset_id):
         if session_key in request.session:
             print(f"📌 Chargement du DataFrame depuis la session pour le dataset {dataset_id}.")
             
-            # ✅ Correction : Lire le JSON correctement
             json_data = request.session[session_key]
-            df = pd.read_json(json_data)  # StringIO n'est pas nécessaire
-            
-            print(f"✅ Dataset chargé depuis la session : {df.shape}")
+            df = pd.read_json(StringIO(json_data))
+
         else:
             print(f"📌 Chargement du DataFrame depuis MongoDB pour le dataset {dataset_id}.")
             project_id = request.session.get("current_project_id")
@@ -29,22 +29,22 @@ def get_dataframe_from_project(request, dataset_id):
                 return None, "❌ Aucun projet actif trouvé."
 
             project = Project.objects.get(id=ObjectId(project_id), user_id=str(request.user.id))
-            
-            # 🔹 Recherche sécurisée du dataset dans la liste des datasets du projet
             dataset = next((ds for ds in project.datasets if str(ds.id) == dataset_id), None)
 
             if not dataset:
                 return None, "❌ Dataset non trouvé."
 
-            # 🔹 Conversion en DataFrame
             df = pd.DataFrame({col.name: col.values for col in dataset.columns})
-            print(f"✅ Dataset chargé depuis MongoDB : {df.shape}")
+
+        # 🔹 Appliquer les suppressions temporaires en session
+        deleted_columns = request.session.get(f"deleted_columns_{dataset_id}", [])
+        df = df.drop(columns=deleted_columns, errors="ignore")
 
         return df, None
 
     except Exception as e:
-        print(f"❌ Erreur lors du chargement du dataset : {str(e)}")
         return None, f"❌ Erreur lors du chargement du dataset : {str(e)}"
+
 
 
 # 🔹 Récupération des datasets sélectionnés
@@ -219,6 +219,46 @@ def filter_text(dataset, column_name, search_value):
         return dataset, f"Erreur lors du filtrage texte : {str(e)}"
 
     return dataset, "Filtrage texte appliqué."
+
+def replace_values_in_dataframe(request, dataset_id, column, old_value, new_value):
+    """
+    Remplace les valeurs filtrées par une nouvelle valeur dans le dataset et met à jour la session.
+    """
+    print(f"passe dans la fonction replace_values_in_dataframe")
+
+
+    session_key = f"modified_dataset_{dataset_id}"
+
+    try:
+        # 🔹 Charger le DataFrame depuis la session ou MongoDB
+        if session_key in request.session:
+            df = pd.read_json(StringIO(request.session[session_key]))
+        else:
+            project_id = request.session.get("current_project_id")
+            if not project_id:
+                return None, "❌ Aucun projet actif trouvé."
+
+            project = Project.objects.get(id=ObjectId(project_id), user_id=str(request.user.id))
+            dataset = next((ds for ds in project.datasets if str(ds.id) == dataset_id), None)
+
+            if not dataset:
+                return None, "❌ Dataset non trouvé."
+
+            df = pd.DataFrame({col.name: col.values for col in dataset.columns})
+
+        if column not in df.columns:
+            return None, "❌ Colonne non trouvée."
+
+        # 🔹 Remplacement des valeurs
+        df[column] = df[column].replace(old_value, new_value)
+
+        # 🔹 Sauvegarde dans la session
+        request.session[session_key] = df.to_json()
+
+        return df, None
+
+    except Exception as e:
+        return None, f"❌ Erreur lors du remplacement : {str(e)}"
 
 
 """

@@ -85,14 +85,13 @@
         <button id="show-filtered-values" class="btn btn-primary btn-sm">
             Afficher les valeurs filtrées
         </button>
-        <button id="delete-filtered-values-btn" class="btn btn-danger btn-sm">
-            Supprimer les valeurs filtrées
-        </button>
+        <button id="delete-filtered-values-btn" class="btn btn-danger">Supprimer les valeurs filtrées</button>
+
         
     </div>
     <div class="d-flex justify-content-between mb-2">
         <button id="replace-values-btn" class="btn btn-warning">Remplacer les valeurs filtrées</button>
-        <button class="btn btn-secondary btn-sm">Supprimer la colonne</button>
+        <button id="delete-column-btn" class="btn btn-secondary btn-sm">Supprimer la colonne</button>
     </div>
 </section>
 
@@ -142,26 +141,25 @@
 
 
 
-<!-- 📌 Modale pour remplacer les valeurs filtrées -->
+<!-- 📌 MODALE POUR REMPLACER LES VALEURS FILTRÉES -->
 <div class="modal fade" id="replaceValuesModal" tabindex="-1" aria-labelledby="replaceValuesModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title" id="replaceValuesModalLabel">Remplacer les valeurs filtrées</h5>
+                <h5 class="modal-title">Remplacer les valeurs filtrées</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
             </div>
             <div class="modal-body">
-                <p>Vous allez remplacer la valeur suivante :</p>
                 <p><strong>Colonne :</strong> <span id="replace-column-name"></span></p>
-                <p><strong>Valeur actuelle :</strong> <span id="replace-old-value"></span></p>
-                <div class="mb-3">
-                    <label for="replace-new-value" class="form-label">Nouvelle valeur :</label>
-                    <input type="text" class="form-control" id="replace-new-value" placeholder="Entrez la nouvelle valeur">
-                </div>
+                <p><strong>Condition :</strong> <span id="replace-filter-condition"></span></p>
+                <p><strong>Valeur filtrée :</strong> <span id="replace-filter-value"></span></p>
+
+                <label for="new-value" class="form-label">Nouvelle valeur :</label>
+                <input type="text" id="new-value" class="form-control" placeholder="Entrer une nouvelle valeur">
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-                <button type="button" class="btn btn-primary" id="apply-replace-btn">Appliquer</button>
+                <button id="confirm-replace" class="btn btn-warning">Remplacer</button>
             </div>
         </div>
     </div>

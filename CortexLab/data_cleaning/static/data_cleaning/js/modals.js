@@ -231,7 +231,6 @@ function getCSRFToken() {
 
 
 
-
 /*
 
 document.addEventListener("DOMContentLoaded", function () {
